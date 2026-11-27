@@ -156,13 +156,81 @@ class ContestImageTest(unittest.TestCase):
                 self.assertEqual(second["data"]["train_rows"], len(train) + half)
                 self.assertEqual(second["data"]["train_new_rows"], half)       # exactly the added rows are new
                 self.assertTrue(second["data"]["recent_candidates"])
-                recent = "recent+balanced" if key == "A" else "recent+pick"
-                self.assertIn(recent, second["candidates"])
+                if key == "A":
+                    self.assertIn("recent+balanced", second["candidates"])
+                else:                                                      # B uses the v1.2 new-rows candidates
+                    self.assertIn("new_x10", second["candidates"])
+                    self.assertIn("new_x30", second["candidates"])
+                    self.assertEqual(second["data"]["validation_new_rows"], 0)   # these rows were validated in round 1
+                    self.assertEqual(second["judged_on"], "all_validation_rows")
                 if key == "A":
                     self.assertIn("balanced", first["candidates"])
                     self.assertIn("pick+balanced", first["candidates"])
                 print(f"\n{key} round 2: choice {second['choice']} among {second['candidates']}; data {second['data']}",
                       file=sys.stderr)
+
+    def run_rounds(self, key, plan):
+        """plan: list of (train_lines, validation_lines); one round each, state carried from round to round."""
+        records = []
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            (tmp / "previous").mkdir()
+            (tmp / "previous" / "checkpoint.npz").write_bytes((DATA / key / "checkpoint.npz").read_bytes())
+            for index, (train_lines, val_lines) in enumerate(plan, 1):
+                (tmp / f"train{index}.jsonl").write_text("\n".join(train_lines) + "\n", encoding="utf-8")
+                (tmp / f"val{index}.jsonl").write_text("\n".join(val_lines) + "\n", encoding="utf-8")
+                frame = start_frame(key, tmp / "previous")
+                frame["round_index"] = index
+                projection = frame["task_contract"]["public_projection"]
+                projection["train_path"], projection["validation_path"] = str(tmp / f"train{index}.jsonl"), str(tmp / f"val{index}.jsonl")
+                if index > 1:
+                    frame["state_path"] = str(tmp / "work" / f"rsi-round-{index - 1:02d}" / "state")
+                host = Host(frame, fake_model(True))
+                with open(tmp / f"stderr{index}.txt", "w", encoding="utf-8") as err:
+                    process = subprocess.Popen([sys.executable, str(APP / "harness.py"), "train"], cwd=APP,
+                                               env=self.env(tmp), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                               stderr=err, text=True)
+                    thread = host.serve(process)
+                    process.wait(timeout=900)
+                    thread.join(timeout=30)
+                stderr = (tmp / f"stderr{index}.txt").read_text(encoding="utf-8")
+                self.assertIsNone(host.failure, stderr[-3000:])
+                self.assertEqual(process.returncode, 0, stderr[-3000:])
+                self.assertEqual(len(host.raw_messages), 1)                    # one model call every round
+                records.append(host.record)
+        return records
+
+    def test_b_trains_only_on_new_data_and_judges_on_new_rows(self):
+        """The data pattern seen on the platform for B (2026-11-27 trial): the public package for several rounds,
+        then a few rows of an unseen bearing, split about 32 % training / 8 % validation. Bearing1_4 plays the
+        unseen bearing (the official checkpoint never trained on it)."""
+        if "B" not in TASKS:
+            self.skipTest("B not selected")
+        import random
+        train = [l for l in (DATA / "B" / "public" / "train.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+        val = [l for l in (DATA / "B" / "public" / "validation.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+        new = [l for l in val if json.loads(l)["meta"]["bearing"] == "Bearing1_4"]
+        old_val = [l for l in val if json.loads(l)["meta"]["bearing"] != "Bearing1_4"]
+        order = list(range(len(new)))
+        random.Random(1).shuffle(order)
+        new_train = [new[i] for i in order[:round(0.32 * len(new))]]
+        new_val = [new[i] for i in order[round(0.32 * len(new)):round(0.40 * len(new))]]
+        records = self.run_rounds("B", [(train, old_val), (train, old_val), (train + new_train, old_val + new_val)])
+        first, second, third = (r["configuration"] for r in records)
+        self.assertIn("cap1.0", first["candidates"])                         # round 1 still improves from the baseline
+        self.assertEqual(second["data"]["train_new_rows"], 0)
+        self.assertEqual(second["candidates"], ["parent"])                    # no new data -> no training
+        self.assertEqual(second["choice"], "parent")
+        self.assertIn("没有新样本", records[1]["reason"])
+        self.assertEqual(third["data"]["train_new_rows"], len(new_train))
+        self.assertEqual(third["data"]["validation_new_rows"], len(new_val))
+        self.assertEqual(third["judged_on"], "new_validation_rows")
+        self.assertIn("new_x10", third["candidates"])
+        self.assertIn("new_x30", third["candidates"])
+        self.assertIn(third["choice"], ("new_x10", "new_x30"))                # the unseen bearing is learned
+        self.assertIn("新验证样本", records[2]["reason"])
+        print(f"\nB rounds: {[c['choice'] for c in (first, second, third)]}; round 3 {records[2]['reason'][:260]}",
+              file=sys.stderr)
 
     def test_model_veto_keeps_parent(self):
         record, _ = self.run_round(TASKS[0], agree=False)
@@ -202,6 +270,35 @@ class ContestImageTest(unittest.TestCase):
                     self.assertEqual(best, model.meta["classes"][int(want[0].argmax())])
                 else:
                     self.assertAlmostEqual(got["outputs"]["value"], float(want[0]), places=6)
+
+
+class NewRowsDecisionTest(unittest.TestCase):
+    """decide_on_new_rows: judged on the new validation rows, with a guard on the older rows."""
+
+    def setUp(self):
+        for path in (str(SDK), str(APP), str(APP / "rsi")):
+            if path in sys.path:
+                sys.path.remove(path)
+            sys.path.insert(0, path)
+        import contest_submission
+        self.cs = contest_submission
+
+    def test_better_on_new_rows_within_the_old_rows_guard(self):
+        import numpy as np
+        rng = np.random.default_rng(0)
+        y = np.concatenate([rng.uniform(500, 1500, 200), rng.uniform(0, 300, 20)])
+        new = np.r_[np.zeros(200, bool), np.ones(20, bool)]
+        parent = y + np.r_[rng.normal(0, 300, 200), rng.normal(300, 50, 20)]       # badly off on the new rows
+        good = y + np.r_[rng.normal(0, 315, 200), rng.normal(20, 50, 20)]          # learned them, old rows ~5 % worse
+        forgot = y + np.r_[rng.normal(0, 450, 200), rng.normal(20, 50, 20)]        # learned them, old rows much worse
+        choice, table = self.cs.decide_on_new_rows("regression", 0, y, {"parent": parent, "good": good,
+                                                                       "forgot": forgot}, 3, new)
+        self.assertEqual(choice, "good")
+        self.assertTrue(table["good"]["passes"])
+        self.assertFalse(table["forgot"]["guard_ok"])
+        self.assertGreater(table["good"]["p_better_than_parent"], 0.9)
+        choice, _ = self.cs.decide_on_new_rows("regression", 0, y, {"parent": parent, "forgot": forgot}, 3, new)
+        self.assertEqual(choice, "parent")
 
 
 class HelperTest(unittest.TestCase):

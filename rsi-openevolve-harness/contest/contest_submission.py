@@ -15,6 +15,15 @@ v1.1（2026-11-27）把经验卡 A-00-BASE-CLASSMIX-01（原 GASMIX 卡的通用
   另写一份训练文件，新样本各多复制 NEW_DATA_COPIES 份（按 1 + NEW_DATA_COPIES 条计）。第 1 轮、
   或本轮全是新样本 / 没有新样本时不训练这类候选。
 新候选和原有候选一样都要过验收门，不通过就不上线。每轮的行数和新样本数写进记录（configuration.data）。
+
+v1.2（2026-11-27，只对 B）：平台在 B 上每隔几轮才给一次新数据，新数据看起来来自一根没见过的轴承
+（训练、验证、隐藏测试按约 32% / 8% / 60% 从同一根轴承抽取，这是从数字推出的假设）。所以：
+- 第 2 轮起，训练集里没有新样本就不训练，直接保留父模型（照样调用一次 Qwen）；
+- 有新样本时只训练"新样本加重"的候选（每条按 10 条或 30 条计，官方续训方式）；
+- 验收看本阶段新出现的验证样本（验证集 id 同样记在 /state 里）：候选要以 ≥90% 的概率在新样本上
+  优于父模型、点估计更好，且在老验证样本上的 RMSE 变差不超过 10%；新验证样本少于 3 条时仍按整个验证集。
+用公开数据模拟（把一根验证轴承当新轴承，32/8/60 随机切分，3 次）：×30 在新轴承测试上比父模型好 27%（1_4）
+和 73%（3_4）；按整个验证集挑会选到 ×1 或 ×3，按新验证样本挑每次都选 ×30。
 """
 import gzip
 import hashlib
@@ -45,6 +54,11 @@ NEW_DATA_COPIES = 2               # a training row unseen in earlier rounds coun
 MAX_TRAIN_BYTES = 120 * 1024 * 1024   # the reference loader refuses files over 128 MiB
 CARD = "A-00-BASE-CLASSMIX-01"  # the experience card the class / new-data weighting candidates come from
 SEEN_FILE = "seen_train_ids.txt.gz"
+SEEN_VAL_FILE = "seen_validation_ids.txt.gz"
+NEW_ROW_DATASETS = ("B",)         # datasets that use the v1.2 new-rows rules (train only on new data, judge on new rows)
+NEW_WEIGHTS = (10, 30)            # each new training row counts this many times in the new-rows candidates
+MIN_NEW_VALIDATION = 3            # fewer new validation rows than this: judge on the whole validation set instead
+OLD_ROWS_GUARD = 0.10             # tolerated relative RMSE worsening on the validation rows seen in earlier rounds
 
 
 def log(message):
@@ -101,8 +115,8 @@ def row_key(identity):
     return hashlib.sha1(identity.encode("utf-8")).hexdigest()[:16]
 
 
-def load_seen(state_dir):
-    path = Path(state_dir) / SEEN_FILE
+def load_seen(state_dir, name=SEEN_FILE):
+    path = Path(state_dir) / name
     try:
         with gzip.open(path, "rt", encoding="ascii") as stream:
             return {line.strip() for line in stream if line.strip()}
@@ -110,8 +124,8 @@ def load_seen(state_dir):
         return set()
 
 
-def save_seen(state_dir, keys):
-    with gzip.open(Path(state_dir) / SEEN_FILE, "wt", encoding="ascii") as stream:
+def save_seen(state_dir, keys, name=SEEN_FILE):
+    with gzip.open(Path(state_dir) / name, "wt", encoding="ascii") as stream:
         stream.write("\n".join(sorted(keys)) + "\n")
 
 
@@ -191,6 +205,47 @@ def decide(task, num_classes, y, pool, round_index):
 
 
 # ---------------------------------------------------------------- the one model call per round
+def decide_on_new_rows(task, num_classes, y, pool, round_index, new_mask):
+    """Like decide(), but judged on the validation rows that are new in this stage (new_mask): a candidate must be
+    better than the parent there with probability >= ADOPT_PROBABILITY and in point estimate, and its RMSE on the
+    older validation rows may worsen by at most OLD_ROWS_GUARD. Returns (choice, table)."""
+    import numpy as np
+    from harness.gate import probability_better
+    primary = PRIMARY[task]
+    new_mask = np.asarray(new_mask, dtype=bool)
+    old_mask = ~new_mask
+    y_new, y_old = y[new_mask], y[old_mask]
+    metrics = {name: evaluate(task, num_classes, y, pred) for name, pred in pool.items()}
+    on_new = {name: evaluate(task, num_classes, y_new, pred[new_mask]) for name, pred in pool.items()}
+    on_old = {name: (evaluate(task, num_classes, y_old, pred[old_mask]) if old_mask.any() else None)
+              for name, pred in pool.items()}
+    table = {"parent": {"metrics": metrics["parent"], "new_rows": on_new["parent"], "old_rows": on_old["parent"]}}
+    eligible = []
+    for name, pred in pool.items():
+        if name == "parent":
+            continue
+        p = probability_better(task, primary, y_new, pred[new_mask], pool["parent"][new_mask], num_classes,
+                               mode="sample", resamples=RESAMPLES, seed=SEED + round_index)
+        if on_old[name] is None:
+            guard_ok = True
+        elif task == "classification":
+            guard_ok = on_old[name][primary] >= on_old["parent"][primary] * (1 - OLD_ROWS_GUARD)
+        else:
+            guard_ok = on_old[name][primary] <= on_old["parent"][primary] * (1 + OLD_ROWS_GUARD)
+        passes = p >= ADOPT_PROBABILITY and guard_ok and better(task, on_new[name][primary], on_new["parent"][primary])
+        table[name] = {"metrics": metrics[name], "new_rows": on_new[name], "old_rows": on_old[name],
+                       "p_better_than_parent": round(p, 4), "guard_ok": guard_ok, "passes": passes}
+        if passes:
+            eligible.append(name)
+    if not eligible:
+        return "parent", table
+    best = eligible[0]
+    for name in eligible[1:]:
+        if better(task, on_new[name][primary], on_new[best][primary]):
+            best = name
+    return best, table
+
+
 def ask_model(rnd, summary):
     system = ("你是工业模型自进化系统的上线审阅者。系统已用固定规则（配对 bootstrap，候选以至少 90% 的概率"
               "优于父模型且护栏不破才上线）给出本轮决定。请审阅数据，只回复 JSON："
@@ -261,26 +316,52 @@ def train(rnd):
     seen = load_seen(state_dir)
     new_mask = np.array([key not in seen for key in keys]) if seen else np.zeros(len(keys), dtype=bool)
     new_keys = {key for key, new in zip(keys, new_mask) if new}
-    recent_path = None
+    val_keys = [row_key(identity) for identity in va["ids"]]
+    seen_val = load_seen(state_dir, SEEN_VAL_FILE)
+    val_new_mask = (np.array([key not in seen_val for key in val_keys]) if seen_val
+                    else np.zeros(len(val_keys), dtype=bool))
+    # v1.2 (B only): from round 2 on, train only when there is new data, and judge on the new validation rows.
+    new_rows_mode = rnd.dataset_key in NEW_ROW_DATASETS and task == "regression" and bool(seen)
+    judge_on_new = new_rows_mode and int(val_new_mask.sum()) >= MIN_NEW_VALIDATION
+    recent_path, weighted = None, []
     if seen and 0 < len(new_keys) < len(keys):
         try:
-            recent_path = write_recent(train_path, new_keys, work / "train_recent.jsonl")
+            if new_rows_mode:
+                for weight in NEW_WEIGHTS:
+                    path = write_recent(train_path, new_keys, work / f"train_new_x{weight}.jsonl", copies=weight - 1)
+                    if path:
+                        weighted.append((weight, path))
+            else:
+                recent_path = write_recent(train_path, new_keys, work / "train_recent.jsonl")
         except Exception as error:
             log(f"new-data training file failed: {type(error).__name__}: {error}")
     data = {"train_rows": len(keys), "train_new_rows": int(new_mask.sum()) if seen else None,
-            "validation_rows": int(len(va["y"])), "recent_candidates": recent_path is not None}
+            "validation_rows": int(len(va["y"])), "validation_new_rows": int(val_new_mask.sum()) if seen_val else None,
+            "recent_candidates": recent_path is not None or bool(weighted)}
     if task == "regression":
         data["train_label_mean"] = round(label_mean, 3)
         if new_mask.any():
             data["new_label_mean"] = round(float(np.mean(tr["y"][new_mask])), 3)
+        if val_new_mask.any():
+            data["new_validation_label_mean"] = round(float(np.mean(va["y"][val_new_mask])), 3)
     save_seen(state_dir, seen | set(keys))
-    log(f"rows train {data['train_rows']} (new {data['train_new_rows']}) validation {data['validation_rows']}")
+    save_seen(state_dir, seen_val | set(val_keys), SEEN_VAL_FILE)
+    log(f"rows train {data['train_rows']} (new {data['train_new_rows']}) validation {data['validation_rows']} "
+        f"(new {data['validation_new_rows']})")
 
     pool = {"parent": predict_array(parent_ckpt, va["x"])}
     checkpoints = {"parent": parent_ckpt}
     notes = {"parent": "父模型（上一轮选定的模型）"}
-    for name, source, note, train_file in candidate_policies(task, label_mean, parent.meta["target_mean"],
-                                                             parent.meta["target_scale"], recent_path=recent_path):
+    if new_rows_mode:
+        initial = (RSI / "harness" / "policy_initial.py").read_text(encoding="utf-8")
+        candidates = [(f"new_x{weight}", initial, f"官方续训 {EPOCHS} 轮，本阶段新样本每条按 {weight} 条计", path)
+                      for weight, path in weighted]
+        if not candidates:
+            log("no new training rows: keep the parent without training")
+    else:
+        candidates = candidate_policies(task, label_mean, parent.meta["target_mean"], parent.meta["target_scale"],
+                                        recent_path=recent_path)
+    for name, source, note, train_file in candidates:
         if time.time() > train_budget:
             log(f"time budget reached; skip candidate {name}")
             break
@@ -307,16 +388,32 @@ def train(rnd):
         except Exception as error:
             log(f"static baseline unavailable: {type(error).__name__}: {error}")
 
-    choice, table = decide(task, num_classes, va["y"], pool, rnd.round_index)
     primary = PRIMARY[task]
+    if judge_on_new:
+        choice, table = decide_on_new_rows(task, num_classes, va["y"], pool, rnd.round_index, val_new_mask)
+        rule = (f"本阶段有 {int(val_new_mask.sum())} 条新验证样本：候选须在这些新样本上以 ≥90% 概率优于父模型且点估计更好，"
+                f"同时在老验证样本上 {primary} 变差不超过 {OLD_ROWS_GUARD:.0%}，才上线；否则保留父模型")
+    else:
+        choice, table = decide(task, num_classes, va["y"], pool, rnd.round_index)
+        rule = "候选以 ≥90% 概率优于父模型、护栏不破且点估计更好才上线；否则保留父模型"
+        if new_rows_mode and len(pool) == 1:
+            rule = "本轮训练集没有新样本：不训练，保留父模型"
+
+    def brief(name):
+        row = {"what": notes[name], primary: round(float(table[name]["metrics"][primary]), 6)}
+        for key in ("p_better_than_parent", "guard_ok", "passes"):
+            if key in table[name]:
+                row[key] = table[name][key]
+        for key in ("new_rows", "old_rows"):
+            if table[name].get(key):
+                row[f"{primary}_{key}"] = round(float(table[name][key][primary]), 6)
+        return row
+
     summary = {"dataset": rnd.dataset_key, "round": rnd.round_index, "task": task, "primary_metric": primary,
                "validation_rows": int(len(va["y"])), "train_rows": int(len(tr["y"])),
-               "train_new_rows": data["train_new_rows"],
-               "rule": "候选以 ≥90% 概率优于父模型、护栏不破且点估计更好才上线；否则保留父模型",
-               "candidates": {name: {"what": notes[name], **{k: (round(v, 6) if isinstance(v, float) else v)
-                                                            for k, v in table[name].items() if k != "metrics"},
-                                     primary: round(float(table[name]["metrics"][primary]), 6)}
-                              for name in table},
+               "train_new_rows": data["train_new_rows"], "validation_new_rows": data["validation_new_rows"],
+               "rule": rule,
+               "candidates": {name: brief(name) for name in table},
                "rule_decision": choice,
                "recent_rounds": memory.get("rounds", [])[-3:]}
     verdict = ask_model(rnd, summary)
@@ -348,7 +445,8 @@ def train(rnd):
 
     record = {"round": rnd.round_index, "choice": final, "rule_decision": choice, "selected": selected,
               "primary": primary, "metrics": {n: round(float(t["metrics"][primary]), 6) for n, t in table.items()},
-              "model_agree": verdict["agree"], "seconds": round(time.time() - started, 1), "data": data}
+              "model_agree": verdict["agree"], "seconds": round(time.time() - started, 1), "data": data,
+              "judged_on": "new_validation_rows" if judge_on_new else "all_validation_rows"}
     memory.setdefault("rounds", []).append(record)
     memory["rounds"] = memory["rounds"][-20:]
     memory["static_artifact_id"] = static_id
@@ -356,16 +454,24 @@ def train(rnd):
     rnd.save_state(state_dir)
 
     reason = (f"规则决定：{choice}；最终选择：{final}。{primary}：" +
-              "，".join(f"{n} {float(t['metrics'][primary]):.4f}" for n, t in table.items()) +
-              f"。Qwen 审阅：{'同意' if verdict['agree'] else '否决'}，{verdict['reason'] or '无补充'}")
+              "，".join(f"{n} {float(t['metrics'][primary]):.4f}" for n, t in table.items()))
+    if judge_on_new:
+        reason += (f"。本阶段新验证样本 {int(val_new_mask.sum())} 条上的 {primary}：" +
+                   "，".join(f"{n} {float(t['new_rows'][primary]):.4f}" for n, t in table.items()))
+    elif new_rows_mode and len(pool) == 1:
+        reason += "。本轮训练集没有新样本，不训练"
+    reason += f"。Qwen 审阅：{'同意' if verdict['agree'] else '否决'}，{verdict['reason'] or '无补充'}"
     rnd.finish(
         selected_artifact_id=selected,
-        hypothesis="只上线在公开验证集上有把握更好的模型；没把握就保留父模型，父模型不如静态基线时回滚。",
+        hypothesis=("有新数据才训练，新样本加重；只上线在本阶段新验证样本上有把握更好、且老样本不明显变差的模型。"
+                    if new_rows_mode else
+                    "只上线在公开验证集上有把握更好的模型；没把握就保留父模型，父模型不如静态基线时回滚。"),
         change_summary=change,
         reason=reason[:3900],
         configuration={"candidates": sorted(pool), "choice": final, "rule_decision": choice,
                        "adopt_probability": ADOPT_PROBABILITY, "resamples": RESAMPLES, "epochs": EPOCHS,
-                       "new_data_weight": 1 + NEW_DATA_COPIES, "data": data},
+                       "new_data_weight": list(NEW_WEIGHTS) if new_rows_mode else 1 + NEW_DATA_COPIES, "data": data,
+                       "judged_on": "new_validation_rows" if judge_on_new else "all_validation_rows"},
         seed=SEED,
         history_ids=[item["id"] for item in history],
         model_call_ids=list(rnd.call_ids),
