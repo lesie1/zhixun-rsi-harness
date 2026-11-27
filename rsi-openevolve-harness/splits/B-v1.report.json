@@ -1,0 +1,68 @@
+{
+  "tool": "team_split",
+  "config": "/home/dino/Documents/rsi-openevolve-harness/configs/run_B.json",
+  "manifest": "/home/dino/Documents/rsi-openevolve-harness/splits/B-v1.json",
+  "manifest_sha256": "sha256:b07fc35fda0551805cae745e8c5bd6a3613a859713d4bf67f4cdc5634d7ebc6d",
+  "options": {
+    "seed": 42,
+    "min_groups": 4,
+    "time_blocks": 10,
+    "method": "auto",
+    "balance": "groups"
+  },
+  "problems": [],
+  "report": {
+    "method": "no_split",
+    "group_key": [
+      "bearing"
+    ],
+    "total_rows": 1679,
+    "sides": {
+      "select": {
+        "rows": 1679,
+        "share_of_all": 1.0,
+        "first_line": 1,
+        "last_line": 1679
+      },
+      "gate": {
+        "rows": 1679,
+        "share_of_all": 1.0,
+        "first_line": 1,
+        "last_line": 1679
+      }
+    },
+    "warnings": [
+      "没有独立验收集（no_split）：验收结论带有选择偏差"
+    ],
+    "targets": {
+      "select": {
+        "mean": 687.9672424061941,
+        "max": 1514.0,
+        "quartiles": [
+          0.0,
+          255.5,
+          675.0,
+          1094.5,
+          1514.0
+        ]
+      },
+      "gate": {
+        "mean": 687.9672424061941,
+        "max": 1514.0,
+        "quartiles": [
+          0.0,
+          255.5,
+          675.0,
+          1094.5,
+          1514.0
+        ]
+      },
+      "all_std": 465.5454953258433,
+      "mean_shift_sd": 0.0
+    },
+    "groups": {
+      "select": 3,
+      "gate": 3
+    }
+  }
+}

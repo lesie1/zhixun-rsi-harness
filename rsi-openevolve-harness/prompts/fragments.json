@@ -1,0 +1,19 @@
+{
+  "artifact_title": "上一次运行的详细反馈",
+  "diverse_programs_title": "其他策略",
+  "attempt_unknown_changes": "（初始策略或改动未知）",
+  "attempt_all_metrics_improved": "全部变好",
+  "attempt_all_metrics_regressed": "全部变差",
+  "attempt_mixed_metrics": "有升有降或持平",
+  "top_program_metrics_prefix": "",
+  "diverse_program_metrics_prefix": "",
+  "inspiration_changes_prefix": "改动:",
+  "inspiration_metrics_excellent": "{metric_name}={value:.3f}",
+  "inspiration_metrics_alternative": "{metric_name} 偏低",
+  "inspiration_code_with_class": "",
+  "inspiration_code_with_numpy": "",
+  "inspiration_code_with_mixed_iteration": "",
+  "inspiration_code_with_concise_line": "",
+  "inspiration_code_with_comprehensive_line": "",
+  "inspiration_no_features_postfix": ""
+}

@@ -1,0 +1,75 @@
+{
+  "decision": "keep_parent",
+  "reason": "没有候选通过验收门，保留起点检查点（回滚）",
+  "primary": "rmse",
+  "threshold": 0.95,
+  "independent_gate": false,
+  "bootstrap": {
+    "mode": "group_mean",
+    "resamples": 2000,
+    "seed": 42,
+    "clusters": 3
+  },
+  "gate_rows": 1679,
+  "aggregate": "group_mean",
+  "metrics": {
+    "parent": {
+      "mae": 368.18658690976554,
+      "rmse": 447.8696375610721
+    },
+    "reference": {
+      "mae": 365.27766233923063,
+      "rmse": 439.15588701678416
+    },
+    "candidate": {
+      "mae": 355.02387996907663,
+      "rmse": 431.4165786736805
+    }
+  },
+  "comparisons": {
+    "reference_vs_parent": {
+      "probability_better": 0.9105,
+      "primary_ratio": 1.0198420442533085,
+      "guard_ok": false,
+      "violations": [
+        {
+          "guard": "group:Bearing1_4",
+          "worsening": 0.16899480223899066,
+          "tolerance": 0.1
+        }
+      ],
+      "passes": false
+    },
+    "candidate_vs_parent": {
+      "probability_better": 1.0,
+      "primary_ratio": 1.0381372893410212,
+      "guard_ok": false,
+      "violations": [
+        {
+          "guard": "group:Bearing1_4",
+          "worsening": 0.13488012253949733,
+          "tolerance": 0.1
+        }
+      ],
+      "passes": false
+    },
+    "candidate_vs_reference": {
+      "probability_better": 0.951,
+      "primary_ratio": 1.0179392928452053,
+      "guard_ok": true,
+      "violations": [],
+      "passes": true
+    }
+  },
+  "warnings": [
+    "only 3 group(s) for key bearing; no independent gate split, selection and gate use the same data",
+    "验收用的数据与搜索用的数据相同，结论带有选择偏差；阈值已提高到 0.95"
+  ],
+  "stage_id": "round-01",
+  "task_name": "B",
+  "policy": "<workspace>/work/e2eB/openevolve_output/best/best_program.py",
+  "candidate_dir": "<workspace>/work/e2eB/candidates/57e2ae3a98cb2d47",
+  "selection_score": 1.0265476573815953,
+  "parent_checkpoint": "<workspace>/cpu/b/checkpoint.npz",
+  "selected_checkpoint": "<workspace>/cpu/b/checkpoint.npz"
+}

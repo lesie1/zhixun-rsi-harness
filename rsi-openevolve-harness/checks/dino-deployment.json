@@ -1,0 +1,51 @@
+{
+  "status": "deployed",
+  "date": "2026-11-15T09:14:00.584512",
+  "project": "/home/dino/Documents/rsi-openevolve-harness",
+  "backup": "/home/dino/Documents/rsi-openevolve-harness-before-ace-20261115",
+  "archive_sha256": "ee2ccb27c2c61ac9e882971873a8ae7f9bdd30ff48d69b56104f2903d7d36e3b",
+  "unchanged_original_files": 115,
+  "captain_tests": "37/37 passed",
+  "dino_full_tests": "36 passed; timeout test hit memory guard first",
+  "dino_timeout_retest": "1/1 passed in separate process",
+  "dino_integration": "passed; A real fixed training; ABC fixture ACE; no external API calls",
+  "data_root": "/home/dino/Documents/cpu-baselines-20261110-v1",
+  "ace_source": "/home/dino/Documents/environment/vendor/ace",
+  "python": "/tmp/claude-1000/-home-dino-Documents/86632056-68e7-4a98-8935-c84aa3c13046/scratchpad/oeenv/bin/python",
+  "live_states": [
+    {
+      "task": "A",
+      "state": {
+        "task": "A",
+        "folder": "/home/dino/Documents/rsi-openevolve-harness/state/live/A/83b5f23d693ac006",
+        "records": 0,
+        "entries": 0,
+        "jobs": {},
+        "calls": {}
+      }
+    },
+    {
+      "task": "B",
+      "state": {
+        "task": "B",
+        "folder": "/home/dino/Documents/rsi-openevolve-harness/state/live/B/df5d2013d9026c8c",
+        "records": 0,
+        "entries": 0,
+        "jobs": {},
+        "calls": {}
+      }
+    },
+    {
+      "task": "C",
+      "state": {
+        "task": "C",
+        "folder": "/home/dino/Documents/rsi-openevolve-harness/state/live/C/98b0641be8e69b09",
+        "records": 0,
+        "entries": 0,
+        "jobs": {},
+        "calls": {}
+      }
+    }
+  ],
+  "test_artifacts": "/home/dino/Documents/rsi-ace-staging-20261115/validation-artifacts"
+}

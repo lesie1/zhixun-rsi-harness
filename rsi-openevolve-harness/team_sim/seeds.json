@@ -1,0 +1,139 @@
+{
+  "schema": "team_gas.base_experiences.v1",
+  "note": "剩余寿命回归任务的预置经验（2026-11-23，来自公开数据上的分析）。格式与 team_gas/base_experiences.json 相同，由 team_sim.seeds 按条件写入阶段 playbook；全部以“待验证”身份出现，靠验收结果积累支持。",
+  "entries": [
+    {
+      "id": "R-00-BASE-CAP-01",
+      "title": "健康期长的剩余寿命回归：截断训练目标",
+      "added": "2026-11-23",
+      "source": "B 公开数据分析：team_sim/evidence/analyze_b7.py、analyze_b8.py、run_continuation.py（2026-11-23）；2026-11-27 补充 C 的反例（镜像第 1 轮，公开验证集）",
+      "conditions": {
+        "task_type": "regression"
+      },
+      "symptom": "预测剩余寿命，健康期很长且特征几乎不变；长寿命设备前期的大标签让模型去记设备个体差异，对新设备乱猜",
+      "action": "在 output_grad 里把回归目标截到训练标签均值：CONFIG 的 cap_multiplier 设 1.0（可试 0.8/1.2/None），评分仍用真实标签",
+      "scope_note": "剩余寿命回归且健康期很长（如 B）；上限只用本阶段训练标签算；评测覆盖整段寿命、标签很宽时（如 C）截在均值会大幅变差",
+      "evidence_ids": [
+        "sim-b7",
+        "sim-b8",
+        "sim-cont",
+        "pkg-C-1127"
+      ],
+      "outcomes": "B 从头训练 按行/等权 RMSE 652/408→617/381；续训15轮 653→632，最后20%寿命段 499→237；C 截在均值 52.87→66.71（变差）",
+      "text": "健康期长的剩余寿命回归任务（如 B），把训练目标截到训练标签均值；标签很宽、评测覆盖整段寿命的任务（如 C）不要截。"
+    },
+    {
+      "id": "R-00-BASE-EARLYSTOP-02",
+      "title": "新设备上训练越久越差：早停",
+      "added": "2026-11-23",
+      "source": "B 官方包 history.jsonl（基线训练过程）；2026-11-27 补充 C 的证据（镜像第 1 轮；Y/C_training/20261124-v1）",
+      "conditions": {
+        "task_type": "regression"
+      },
+      "symptom": "验证集是训练中没见过的设备，验证误差在前几轮最低、之后上升",
+      "action": "用 pick_epoch 选验证主指标最好的轮次，或减少 epochs；不要默认取最后一轮",
+      "scope_note": "验证集按整台设备与训练集分开时",
+      "evidence_ids": [
+        "pkg-hist",
+        "pkg-C-1127",
+        "oe-C-1124"
+      ],
+      "outcomes": "B 官方基线验证 RMSE 第2轮567、第15轮681；C 选轮 52.37→51.81，C 的搜索也独立找到此法",
+      "text": "新设备上训练越久越差，按验证集挑轮次或少训几轮；B、C 都成立。"
+    },
+    {
+      "id": "R-00-BASE-FEATURES-03",
+      "title": "B：频谱质心、峭度、功率谱峭度在新轴承上误导",
+      "added": "2026-11-23",
+      "source": "B 公开数据置换重要性：team_sim/evidence/analyze_b4.py（2026-11-23）",
+      "conditions": {
+        "task_type": "regression",
+        "task_names": [
+          "B"
+        ]
+      },
+      "symptom": "模型依赖设备个体差异；打乱部分特征后新轴承误差反而下降",
+      "action": "在 extra_grad 里对 w1 第 6、14、15、23、31、32 行（两通道峭度、频谱质心、功率谱峭度）加小的 L2 惩罚",
+      "scope_note": "仅 B 的 34 个特征顺序；惩罚系数从小试起，噪声大，待验证",
+      "evidence_ids": [
+        "sim-b4"
+      ],
+      "outcomes": "3 根验证轴承上打乱这三类特征，按行 RMSE 下降 19～28（相关不等于因果）",
+      "text": "B 的频谱质心、峭度、功率谱峭度可能误导，可在 extra_grad 中轻度惩罚对应输入权重。"
+    },
+    {
+      "id": "R-00-BASE-METRIC-04",
+      "title": "按行 RMSE 被长寿命设备主导",
+      "added": "2026-11-23",
+      "source": "B 公开验证集组成",
+      "conditions": {
+        "task_type": "regression"
+      },
+      "symptom": "评测按行算 RMSE，长寿命设备行数多、误差大，主导总分",
+      "action": "改动以按行 RMSE 为主，同时看按设备等权 RMSE 作护栏，避免为长寿命设备牺牲短寿命设备太多",
+      "scope_note": "设备寿命差异大的回归任务",
+      "evidence_ids": [
+        "pkg-val"
+      ],
+      "outcomes": "B 验证 1679 行中 1515 行来自同一根长寿命轴承",
+      "text": "按行 RMSE 被长寿命设备主导，等权 RMSE 作护栏。"
+    },
+    {
+      "id": "R-00-BASE-COMPARE-05",
+      "title": "数据流里和静态基线比，不跨段比绝对 RMSE",
+      "added": "2026-11-23",
+      "source": "数据流设计讨论（2026-11-23）",
+      "conditions": {
+        "task_type": "regression"
+      },
+      "symptom": "按时间推进的数据流，越接近失效剩余寿命越小，RMSE 天然变小",
+      "action": "判断变好变差用同一批数据上相对静态基线的比例：(基线RMSE−模型RMSE)/基线RMSE",
+      "scope_note": "剩余寿命类、按时间推进的数据流",
+      "evidence_ids": [
+        "design-05"
+      ],
+      "outcomes": "原则性经验，无单独实验",
+      "text": "数据流中用相对静态基线的比例判断表现，不跨段比绝对 RMSE。"
+    },
+    {
+      "id": "R-00-BASE-NOCAP-06",
+      "title": "先测后训的后几轮可试不截断",
+      "added": "2026-11-23",
+      "source": "数据流设计讨论（2026-11-23），未经实验",
+      "conditions": {
+        "task_type": "regression",
+        "protocols": [
+          "1"
+        ]
+      },
+      "symptom": "被测设备的标签会回传，后几轮模型已见过它前几段",
+      "action": "后几轮把 cap_multiplier 设为 None（不截断）作为候选之一，由验收门决定",
+      "scope_note": "仅限被测设备标签会回传的给法",
+      "evidence_ids": [
+        "design-06"
+      ],
+      "outcomes": "假设，待模拟器验证",
+      "text": "被测设备标签回传时，后几轮可试不截断目标。"
+    },
+    {
+      "id": "R-00-BASE-NOCOND-07",
+      "title": "轴承任务不要按工况分支",
+      "added": "2026-11-27",
+      "source": "B 官方包公开部分：留一整根轴承，用 34 个特征判工况（2026-11-27）",
+      "conditions": {
+        "task_type": "regression",
+        "task_names": [
+          "B"
+        ]
+      },
+      "symptom": "想按工况（转速/载荷）分别处理样本",
+      "action": "不要按工况分支：输入没有工况，34 个特征认不出新轴承的工况（主频多为 700–1200 Hz 共振，不是转速）",
+      "scope_note": "B 的 34 个汇总特征",
+      "evidence_ids": [
+        "loo-B-1127"
+      ],
+      "outcomes": "留一整根轴承判工况，正确率 35～40%（瞎猜 33%）",
+      "text": "轴承任务认不出没见过设备的工况，不要按工况分支。"
+    }
+  ]
+}

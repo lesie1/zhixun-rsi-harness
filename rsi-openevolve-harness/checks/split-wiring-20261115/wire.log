@@ -1,0 +1,54 @@
+校验：没有发现问题
+划分方式: class_time
+有标签数据共 1244 行
+  挑选集: 623 行（50.1%），文件第 1–978 行之间
+  验收集: 621 行（49.9%），文件第 230–1244 行之间
+  各类别数量（挑选 / 验收）: Acetaldehyde 55/54，Acetone 266/266，Ammonia 50/50，Ethanol 82/82，Ethylene 167/167，Toluene 3/2
+  两边类别占比的总变差距离: 0.003
+质量提示:
+  - 类别 Toluene 在验收集只有 2 个（少于 5），这一类的验收结论不可靠
+已写入 splits/A-v1.json（摘要 sha256:17a2507c34aefb7b…）和 splits/A-v1.report.json
+已生成 configs/run_A.split-v1.json
+  stage_id: ace-live-A-split-v1
+  work_dir: /home/dino/Documents/rsi-openevolve-harness/runs/live/A-split-v1
+  split_manifest: /home/dino/Documents/rsi-openevolve-harness/splits/A-v1.json
+  ACE 经验库（新 scope，空库）: /home/dino/Documents/rsi-openevolve-harness/state/live/A/2afa6f8a4fe23154
+校验：没有发现问题
+校验：没有发现问题
+划分方式: no_split，分组键: bearing
+有标签数据共 1679 行
+  挑选集: 1679 行（100.0%），文件第 1–1679 行之间，3 组
+  验收集: 1679 行（100.0%），文件第 1–1679 行之间，3 组
+  挑选集目标: 均值 688，四分位 0 / 255.5 / 675 / 1094 / 1514
+  验收集目标: 均值 688，四分位 0 / 255.5 / 675 / 1094 / 1514
+  两边目标均值相差 0.000 个标准差
+质量提示:
+  - 没有独立验收集（no_split）：验收结论带有选择偏差
+已写入 splits/B-v1.json（摘要 sha256:b07fc35fda055180…）和 splits/B-v1.report.json
+已生成 configs/run_B.split-v1.json
+  stage_id: ace-live-B-split-v1
+  work_dir: /home/dino/Documents/rsi-openevolve-harness/runs/live/B-split-v1
+  split_manifest: /home/dino/Documents/rsi-openevolve-harness/splits/B-v1.json
+  ACE 经验库（新 scope，空库）: /home/dino/Documents/rsi-openevolve-harness/state/live/B/7a563dd656ed23b3
+校验：没有发现问题
+校验：没有发现问题
+划分方式: group_stratified，分组键: source_subset+unit
+有标签数据共 23049 行
+  挑选集: 11817 行（51.3%），文件第 1–22736 行之间，55 组
+  验收集: 11232 行（48.7%），文件第 209–23049 行之间，51 组
+  挑选集目标: 均值 113.9，四分位 0 / 53 / 107 / 163 / 380
+  验收集目标: 均值 120.5，四分位 0 / 55 / 110 / 168 / 434
+  两边目标均值相差 0.084 个标准差
+  按 source_subset 细分（组数/行数，挑选 | 验收）:
+    FD001: 8/1690 | 7/1520
+    FD002: 20/3722 | 19/3859
+    FD003: 8/1857 | 7/1698
+    FD004: 19/4548 | 18/4155
+质量提示: 无
+已写入 splits/C-v1.json（摘要 sha256:bcf9f714d05a8d25…）和 splits/C-v1.report.json
+已生成 configs/run_C.split-v1.json
+  stage_id: ace-live-C-split-v1
+  work_dir: /home/dino/Documents/rsi-openevolve-harness/runs/live/C-split-v1
+  split_manifest: /home/dino/Documents/rsi-openevolve-harness/splits/C-v1.json
+  ACE 经验库（新 scope，空库）: /home/dino/Documents/rsi-openevolve-harness/state/live/C/2a34f02bcf4935cb
+校验：没有发现问题

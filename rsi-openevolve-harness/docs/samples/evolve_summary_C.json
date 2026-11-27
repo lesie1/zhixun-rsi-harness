@@ -1,0 +1,26 @@
+{
+  "run_id": "20261115T044748",
+  "task_name": "C",
+  "stage_id": "round-01",
+  "iterations_recorded": 24,
+  "seconds": 17.457951068878174,
+  "status_counts": {
+    "ok": 15,
+    "train_failed": 4,
+    "policy_rejected": 3,
+    "rejected_before_eval": 2
+  },
+  "outcome_counts": {
+    "improved": 10,
+    "failed": 9,
+    "regressed": 3,
+    "equal": 2
+  },
+  "best_program": "<workspace>/work/e2eC/openevolve_output/best/best_program.py",
+  "best_metrics": {
+    "combined_score": 1.0295334002975898,
+    "primary_ratio": 1.0295040499409964
+  },
+  "reference_combined_score": 1.0107999370542005,
+  "records": "<workspace>/work/e2eC/records/iterations.jsonl"
+}

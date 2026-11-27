@@ -1,0 +1,64 @@
+# OpenEvolve 配置。任务相关的内容（数据路径、任务名、系统提示里的任务说明）不在这里，
+# 而在运行配置 run_*.json 里；系统提示由 scripts/run_evolve.py 在启动时生成。
+
+max_iterations: 60
+checkpoint_interval: 10
+log_level: "INFO"
+random_seed: 42
+
+# 只允许 SEARCH/REPLACE 小改动，并自动撤回 EVOLVE-BLOCK 之外的任何修改
+diff_based_evolution: true
+full_rewrite_probability: 0.0
+enforce_evolve_blocks: true
+max_code_length: 12000
+
+llm:
+  # 改成 pytrio（或 vLLM / SGLang）提供的 OpenAI 兼容地址和模型名；也可以用命令行参数覆盖
+  api_base: "http://127.0.0.1:8000/v1"
+  api_key: "EMPTY"
+  models:
+    - name: "qwen"
+      weight: 1.0
+  temperature: 0.7
+  top_p: 0.95
+  max_tokens: 3000
+  timeout: 600
+  retries: 2
+  retry_delay: 5
+
+prompt:
+  template_dir: "../prompts"
+  num_top_programs: 2
+  num_diverse_programs: 1
+  use_template_stochasticity: false
+  include_artifacts: true
+  max_artifact_bytes: 8192
+  # 默认值 500 会让每个提示都出现"代码太长请简化"，这里关掉
+  suggest_simplification_after_chars: 100000
+
+database:
+  population_size: 200
+  archive_size: 30
+  num_islands: 2
+  elite_selection_ratio: 0.2
+  exploration_ratio: 0.2
+  exploitation_ratio: 0.6
+  feature_dimensions: ["complexity", "diversity"]
+  feature_bins: 5
+  migration_interval: 15
+  migration_rate: 0.1
+
+evaluator:
+  # evaluator 内部自己限时（run 配置里的 limits.train_timeout_s），这里只是外层保险
+  timeout: 900
+  max_retries: 0
+  cascade_evaluation: false
+  parallel_evaluations: 2
+  enable_artifacts: true
+
+evolution_trace:
+  enabled: true
+  format: "jsonl"
+  include_code: true
+  include_prompts: true
+  include_failures: true

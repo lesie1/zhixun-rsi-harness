@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-15",
+  "operation": "team_split make/wire/verify; API handoff only",
+  "tests": {
+    "before": {
+      "exit_code": 0,
+      "tests": 58,
+      "seconds": 42.896,
+      "log": "checks/split-wiring-20261115/before-tests.log"
+    },
+    "after": {
+      "exit_code": 0,
+      "tests": 58,
+      "seconds": 43.302,
+      "log": "checks/split-wiring-20261115/after-tests.log"
+    }
+  },
+  "original_files_checked": 187,
+  "original_files_changed": [],
+  "existing_live_files_checked": 12,
+  "existing_live_files_changed": [],
+  "tasks": {
+    "A": {
+      "config": "configs/run_A.split-v1.json",
+      "manifest": "splits/A-v1.json",
+      "stage_id": "ace-live-A-split-v1",
+      "work_dir": "/home/dino/Documents/rsi-openevolve-harness/runs/live/A-split-v1",
+      "method": "class_time",
+      "counts": {
+        "select": {
+          "rows": 623,
+          "labels": {
+            "Acetaldehyde": 55,
+            "Acetone": 266,
+            "Ammonia": 50,
+            "Ethanol": 82,
+            "Ethylene": 167,
+            "Toluene": 3
+          }
+        },
+        "gate": {
+          "rows": 621,
+          "labels": {
+            "Acetaldehyde": 54,
+            "Acetone": 266,
+            "Ammonia": 50,
+            "Ethanol": 82,
+            "Ethylene": 167,
+            "Toluene": 2
+          }
+        }
+      },
+      "playbook_path": "/home/dino/Documents/rsi-openevolve-harness/state/live/A/2afa6f8a4fe23154/playbook.md",
+      "new_memory_counts": {
+        "records": 0,
+        "entries": 0,
+        "calls": 0,
+        "jobs": 0
+      },
+      "manifest_sha256": "sha256:17a2507c34aefb7befaa3ec57e54d5d6112673f6c921c17a717647130dc7891a"
+    },
+    "B": {
+      "config": "configs/run_B.split-v1.json",
+      "manifest": "splits/B-v1.json",
+      "stage_id": "ace-live-B-split-v1",
+      "work_dir": "/home/dino/Documents/rsi-openevolve-harness/runs/live/B-split-v1",
+      "method": "no_split",
+      "counts": {
+        "select": {
+          "rows": 1679,
+          "groups": 3
+        },
+        "gate": {
+          "rows": 1679,
+          "groups": 3
+        }
+      },
+      "playbook_path": "/home/dino/Documents/rsi-openevolve-harness/state/live/B/7a563dd656ed23b3/playbook.md",
+      "new_memory_counts": {
+        "records": 0,
+        "entries": 0,
+        "calls": 0,
+        "jobs": 0
+      },
+      "manifest_sha256": "sha256:b07fc35fda0551805cae745e8c5bd6a3613a859713d4bf67f4cdc5634d7ebc6d"
+    },
+    "C": {
+      "config": "configs/run_C.split-v1.json",
+      "manifest": "splits/C-v1.json",
+      "stage_id": "ace-live-C-split-v1",
+      "work_dir": "/home/dino/Documents/rsi-openevolve-harness/runs/live/C-split-v1",
+      "method": "group_stratified",
+      "counts": {
+        "select": {
+          "rows": 11817,
+          "groups": 55
+        },
+        "gate": {
+          "rows": 11232,
+          "groups": 51
+        }
+      },
+      "playbook_path": "/home/dino/Documents/rsi-openevolve-harness/state/live/C/2a34f02bcf4935cb/playbook.md",
+      "new_memory_counts": {
+        "records": 0,
+        "entries": 0,
+        "calls": 0,
+        "jobs": 0
+      },
+      "manifest_sha256": "sha256:bcf9f714d05a8d253033c80cac0a9d4e6bd0fe1a5c9866e69d7f2034c78e10ee"
+    }
+  },
+  "new_project_files": [
+    "checks/split-wiring-20261115/after-tests.log",
+    "checks/split-wiring-20261115/before-files.json",
+    "checks/split-wiring-20261115/before-live.json",
+    "checks/split-wiring-20261115/before-tests.log",
+    "checks/split-wiring-20261115/wire.log",
+    "configs/openevolve.split-v1.yaml",
+    "configs/run_A.split-v1.json",
+    "configs/run_B.split-v1.json",
+    "configs/run_C.split-v1.json",
+    "docs/RUN_SPLIT_API.md",
+    "splits/A-v1.json",
+    "splits/A-v1.report.json",
+    "splits/B-v1.json",
+    "splits/B-v1.report.json",
+    "splits/C-v1.json",
+    "splits/C-v1.report.json"
+  ],
+  "openevolve_config_parse": "passed; dummy key used only for parsing; no model request",
+  "live_api_calls_made": 0,
+  "ace_enabled": false,
+  "notes": [
+    "B remains no_split with selection-bias warning",
+    "Original code and configs preserved",
+    "API and first-run budgets remain for the operator to fill"
+  ]
+}

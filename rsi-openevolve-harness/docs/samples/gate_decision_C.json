@@ -1,0 +1,63 @@
+{
+  "decision": "adopt_candidate",
+  "reason": "进化出的策略通过验收门，且不差于官方续训",
+  "primary": "rmse",
+  "threshold": 0.9,
+  "independent_gate": true,
+  "bootstrap": {
+    "mode": "cluster",
+    "resamples": 2000,
+    "seed": 42,
+    "clusters": 51
+  },
+  "gate_rows": 11232,
+  "aggregate": "pooled",
+  "metrics": {
+    "parent": {
+      "mae": 40.533995609860455,
+      "rmse": 56.88868012935796,
+      "nasa_score": 5465983685.570057
+    },
+    "reference": {
+      "mae": 39.912985493065534,
+      "rmse": 56.402294363102996,
+      "nasa_score": 4841371055.568153
+    },
+    "candidate": {
+      "mae": 39.379494009626626,
+      "rmse": 55.77057022365724,
+      "nasa_score": 3748206493.8103857
+    }
+  },
+  "comparisons": {
+    "reference_vs_parent": {
+      "probability_better": 0.999,
+      "primary_ratio": 1.0086235102977148,
+      "guard_ok": true,
+      "violations": [],
+      "passes": true
+    },
+    "candidate_vs_parent": {
+      "probability_better": 0.995,
+      "primary_ratio": 1.0200483857564437,
+      "guard_ok": true,
+      "violations": [],
+      "passes": true
+    },
+    "candidate_vs_reference": {
+      "probability_better": 0.9515,
+      "primary_ratio": 1.0113271952736425,
+      "guard_ok": true,
+      "violations": [],
+      "passes": true
+    }
+  },
+  "warnings": [],
+  "stage_id": "round-01",
+  "task_name": "C",
+  "policy": "<workspace>/work/e2eC/openevolve_output/best/best_program.py",
+  "candidate_dir": "<workspace>/work/e2eC/candidates/63719122eb74cc6f",
+  "selection_score": 1.0295334002975898,
+  "parent_checkpoint": "<workspace>/cpu/c/checkpoint.npz",
+  "selected_checkpoint": "<workspace>/work/e2eC/selected/checkpoint.npz"
+}

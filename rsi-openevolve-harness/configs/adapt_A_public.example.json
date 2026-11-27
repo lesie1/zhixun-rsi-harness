@@ -1,0 +1,142 @@
+{
+  "experiment_id": "A-public-adapt-v1",
+  "task_name": "A",
+  "base_config": "run_A.json",
+  "initial_train_batches": [
+    "b1"
+  ],
+  "batches": [
+    {
+      "id": "b1",
+      "order": 1,
+      "path": "${A_PUBLIC}/train.jsonl",
+      "labels_available": true,
+      "uses": [
+        "train"
+      ],
+      "sha256": "c724014feb2c968d144e167f4997d2ad2125df3825abf4306c9c87c8f08de6c0",
+      "exposure": [
+        "官方基线检查点的训练数据",
+        "v7–v17 各实验的训练批次"
+      ]
+    },
+    {
+      "id": "b2",
+      "order": 2,
+      "path": "${A_PUBLIC}/validation.jsonl",
+      "labels_available": true,
+      "uses": [
+        "train",
+        "dev"
+      ],
+      "sha256": "6be1370388bf67d017f7426a51e149a65baf9bc1186f5f41f6731ce5006ffbee",
+      "exposure": [
+        "live split-v1 搜索的挑选集和验收集（2026-11-16）",
+        "v14 冻结候选复查（public_A_batch2）",
+        "v15 评估",
+        "乙醛诊断（2026-11-17）"
+      ]
+    },
+    {
+      "id": "b3",
+      "order": 3,
+      "path": "${A_SERVER_BATCHES}/batch3.selection.jsonl",
+      "labels_available": true,
+      "uses": [
+        "train",
+        "dev"
+      ],
+      "sha256": "07b17888f3a7cefc9c3fac72bc2411e3e63b7aa10a662cf738603ee4db7383d7",
+      "exposure": [
+        "v7 策略开发评分（64 次训练）",
+        "v9 / v12 开发选择",
+        "v13 / v13b 阈值选择",
+        "v14 在其上从 165 个操作点中选出 S05"
+      ]
+    },
+    {
+      "id": "b4",
+      "order": 4,
+      "path": "${A_SERVER_BATCHES}/batch4.jsonl",
+      "labels_available": true,
+      "uses": [
+        "train",
+        "dev"
+      ],
+      "sha256": "37bb9570a9e792740fb1fffbeea692a134c330ec501a05d7dd7ae88483f71423",
+      "exposure": [
+        "v14 冻结候选的独立检查已用掉一次（2026-11-17）",
+        "是否在 v16/v17 中作为补样来源：待按 captain 记录核对"
+      ]
+    },
+    {
+      "id": "b5",
+      "order": 5,
+      "path": "${A_SERVER_BATCHES}/batch5.jsonl",
+      "labels_available": true,
+      "uses": [
+        "train",
+        "dev"
+      ],
+      "exposure": [
+        "v16、v17 中使用过（2026-11-18 项目组告知）"
+      ]
+    },
+    {
+      "id": "b6",
+      "order": 6,
+      "path": "${A_SERVER_BATCHES}/batch6.jsonl",
+      "labels_available": true,
+      "uses": [
+        "train",
+        "dev"
+      ],
+      "exposure": [
+        "v17 中用于验收（2026-11-18 项目组告知）"
+      ]
+    },
+    {
+      "id": "b7",
+      "order": 7,
+      "path": "${A_SERVER_BATCHES}/batch7.jsonl",
+      "labels_available": false,
+      "uses": [
+        "final"
+      ],
+      "exposure": []
+    }
+  ],
+  "training": {
+    "mode": "replay"
+  },
+  "stagnation": {
+    "patience": 6,
+    "min_delta": 0.002,
+    "max_consecutive_failures": 8
+  },
+  "budget": {
+    "stage_max_iterations": 30,
+    "stage_max_seconds": 3600,
+    "stage_max_tokens": 400000,
+    "max_stages": 5,
+    "max_total_iterations": 150
+  },
+  "search": {
+    "mode": "evolve",
+    "oe_config": "openevolve.split-v1.yaml",
+    "workers": 1,
+    "poll_seconds": 2
+  },
+  "advance_on": [
+    "stagnated"
+  ],
+  "final": {
+    "batch": "b7",
+    "allow_exposed": false
+  },
+  "focus_classes": [
+    "Acetaldehyde",
+    "Ethanol"
+  ],
+  "forgetting_tolerance": 0.02
+}

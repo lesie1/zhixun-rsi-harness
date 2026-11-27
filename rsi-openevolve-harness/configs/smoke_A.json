@@ -1,0 +1,54 @@
+{
+  "task_name": "A",
+  "stage_id": "ace-smoke-A",
+  "train_path": "/home/dino/Documents/cpu-baselines-20261110-v1/A/public/train.jsonl",
+  "validation_path": "/home/dino/Documents/cpu-baselines-20261110-v1/A/public/validation.jsonl",
+  "parent_checkpoint": "/home/dino/Documents/cpu-baselines-20261110-v1/A/checkpoint.npz",
+  "work_dir": "/home/dino/Documents/rsi-openevolve-harness/runs/smoke/A",
+  "seed": 42,
+  "limits": {
+    "max_epochs": 5,
+    "train_timeout_s": 20,
+    "cpu_threads": 1
+  },
+  "split": {
+    "min_groups": 4
+  },
+  "records": {
+    "include_prompt": true
+  },
+  "prompt": {
+    "playbook_max_chars": 2500,
+    "recent_failures": 3
+  },
+  "ace": {
+    "module": "team_ace",
+    "batch_size": 1,
+    "mode": "fixture",
+    "storage_root": "/home/dino/Documents/rsi-openevolve-harness/state/smoke",
+    "record_origin": "real_A_fixed_continuation",
+    "max_total_calls": 6,
+    "live_calls_approved": false,
+    "model": null,
+    "api_base": null,
+    "api_key_env": null,
+    "scope": {
+      "task": "A",
+      "task_type": "classification",
+      "unit": "class",
+      "source_hashes": {
+        "train_path": "c724014feb2c968d144e167f4997d2ad2125df3825abf4306c9c87c8f08de6c0",
+        "validation_path": "6be1370388bf67d017f7426a51e149a65baf9bc1186f5f41f6731ce5006ffbee",
+        "parent_checkpoint": "fd1e08b2aad08b2e9754f9b2dfdc029481c0da7ecdedca0abb0ec6fcc818c757"
+      },
+      "split_manifest": null,
+      "split_options": {
+        "min_groups": 4
+      },
+      "seed": 42,
+      "spec_file": null,
+      "protocol": "selection-feedback-only-v1"
+    }
+  },
+  "playbook_path": "/home/dino/Documents/rsi-openevolve-harness/state/smoke/A/83b5f23d693ac006/playbook.md"
+}

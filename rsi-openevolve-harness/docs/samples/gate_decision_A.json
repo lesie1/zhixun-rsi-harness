@@ -1,0 +1,69 @@
+{
+  "decision": "adopt_reference",
+  "reason": "进化出的策略没有通过验收门；官方续训通过，采用官方续训",
+  "primary": "macro_f1",
+  "threshold": 0.9,
+  "independent_gate": true,
+  "bootstrap": {
+    "mode": "sample",
+    "resamples": 2000,
+    "seed": 42,
+    "clusters": 0
+  },
+  "gate_rows": 621,
+  "aggregate": "pooled",
+  "metrics": {
+    "parent": {
+      "accuracy": 0.8743961352657005,
+      "macro_f1": 0.7126189324302533,
+      "macro_f1_all": 0.7126189324302533,
+      "weighted_f1": 0.849576895420483,
+      "balanced_accuracy": 0.8101241126769018
+    },
+    "reference": {
+      "accuracy": 0.8792270531400966,
+      "macro_f1": 0.7157597906344025,
+      "macro_f1_all": 0.7157597906344025,
+      "weighted_f1": 0.8534608050067102,
+      "balanced_accuracy": 0.8131181246529496
+    },
+    "candidate": {
+      "accuracy": 0.8760064412238325,
+      "macro_f1": 0.7129163481347432,
+      "macro_f1_all": 0.7129163481347432,
+      "weighted_f1": 0.8503965466985836,
+      "balanced_accuracy": 0.8090530840025432
+    }
+  },
+  "comparisons": {
+    "reference_vs_parent": {
+      "probability_better": 0.97275,
+      "primary_ratio": 1.0044074863313524,
+      "guard_ok": true,
+      "violations": [],
+      "passes": true
+    },
+    "candidate_vs_parent": {
+      "probability_better": 0.54775,
+      "primary_ratio": 1.0004173558839864,
+      "guard_ok": true,
+      "violations": [],
+      "passes": false
+    },
+    "candidate_vs_reference": {
+      "probability_better": 0.06525,
+      "primary_ratio": 0.9960273788261576,
+      "guard_ok": true,
+      "violations": [],
+      "passes": false
+    }
+  },
+  "warnings": [],
+  "stage_id": "round-01",
+  "task_name": "A",
+  "policy": "<workspace>/work/e2eA/openevolve_output/best/best_program.py",
+  "candidate_dir": "<workspace>/work/e2eA/candidates/393b9d4c275c911c",
+  "selection_score": 1.0295313047976853,
+  "parent_checkpoint": "<workspace>/cpu/a/checkpoint.npz",
+  "selected_checkpoint": "<workspace>/work/e2eA/selected/checkpoint.npz"
+}

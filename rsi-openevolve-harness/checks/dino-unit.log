@@ -1,0 +1,24 @@
+.F...................................
+======================================================================
+FAIL: test_blocked_worker_is_killed_and_evidence_survives (test_ace_adapter.AdapterTests.test_blocked_worker_is_killed_and_evidence_survives)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/dino/Documents/rsi-ace-staging-20261115/rsi-openevolve-harness/tests/test_ace_adapter.py", line 159, in test_blocked_worker_is_killed_and_evidence_survives
+    self.assertEqual(result['stop_reason'], 'wall_timeout')
+AssertionError: 'memory_limit' != 'wall_timeout'
+- memory_limit
++ wall_timeout
+
+
+----------------------------------------------------------------------
+Ran 37 tests in 34.378s
+
+FAILED (failures=1)
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations
+Warning: Failed to parse bullet tags from JSON response
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations
+✅ Curator proposal JSON schema validated successfully: 1 ADD operations

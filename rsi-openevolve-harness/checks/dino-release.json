@@ -1,0 +1,21 @@
+{
+  "source_sha256": "f487adefa0d3e66148e7e2c575542e0d59f0e33fefb446ccbb50f6fc8ecf444a",
+  "source_tests": "37 passed, no skips",
+  "deployment_changed_files": [
+    "requirements.txt",
+    "team_ace/__main__.py",
+    "team_ace/backend.py",
+    "configs/smoke_C.json",
+    "configs/run_A.json",
+    "configs/smoke_A.json",
+    "configs/smoke_B.json",
+    "configs/run_B.json",
+    "configs/run_C.json"
+  ],
+  "upstream_commit": "82709de050e1db6e6ef2f07bcb0393560b94992a",
+  "extra_dependencies": {
+    "python-dotenv": "1.2.4",
+    "tiktoken": "0.12.0"
+  },
+  "real_model_calls": 0
+}

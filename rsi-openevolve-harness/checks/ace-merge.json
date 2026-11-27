@@ -1,0 +1,82 @@
+{
+  "status": "passed",
+  "target": "/home/captain/projects/FINAL/rsi-openevolve-harness",
+  "source": "/home/captain/projects/L/ace_adapter",
+  "record_dir": "/home/captain/projects/FINAL/merge-records/ace-20261115-164045",
+  "backup": "/home/captain/projects/FINAL/backups/rsi-openevolve-harness-before-ace-20261115-164045.zip",
+  "backup_sha256": "35da5eeb0d30b96caf2ed6b351131f3b539eed5717d7c359b5849cacd8240bf5",
+  "changed_original_files": [
+    ".gitignore",
+    "README.md",
+    "configs/run_A.json",
+    "configs/run_B.json",
+    "configs/run_C.json",
+    "docs/ACE_INTERFACE.md"
+  ],
+  "added_files": [
+    "checks/ace-merge-protected.json",
+    "docs/ACE_ADAPTER.txt",
+    "scripts/check_ace_integration.py",
+    "state/live/A/83b5f23d693ac006/memory.sqlite3",
+    "state/live/A/83b5f23d693ac006/playbook.md",
+    "state/live/A/83b5f23d693ac006/versions/ede8f53acc7a.md",
+    "state/live/A/83b5f23d693ac006/view.json",
+    "state/live/B/df5d2013d9026c8c/memory.sqlite3",
+    "state/live/B/df5d2013d9026c8c/playbook.md",
+    "state/live/B/df5d2013d9026c8c/versions/83dcbe5fd1d1.md",
+    "state/live/B/df5d2013d9026c8c/view.json",
+    "state/live/C/98b0641be8e69b09/memory.sqlite3",
+    "state/live/C/98b0641be8e69b09/playbook.md",
+    "state/live/C/98b0641be8e69b09/versions/6a7233232b97.md",
+    "state/live/C/98b0641be8e69b09/view.json",
+    "team_ace/__init__.py",
+    "team_ace/__main__.py",
+    "team_ace/backend.py",
+    "team_ace/store.py",
+    "team_ace/worker.py",
+    "tests/test_ace_adapter.py"
+  ],
+  "protected_original_files": 282,
+  "source_files": {
+    "team_ace/worker.py": "fcc40db83f1c5ec40349bf65653025becbb02fb6e9dee0b7d50d036ac2aa2845",
+    "team_ace/store.py": "36447f114ddc7e0681285dcc82890e4ed45594e5ca5cf8a5e7072f97a96115f5",
+    "team_ace/__init__.py": "be948c8f955b754a1037f2a0b615716c6976a8d472fa68e11545e5ca5da23c3b",
+    "team_ace/__main__.py": "14f47528688f27466f9ea29f784085f52e9caf96be6332a0aecfb37f1eff027b",
+    "team_ace/backend.py": "d46d600a1d6fc8d9bb0520636514d56513fa8114eaf556cec6b8ebdced83e052",
+    "scripts/check_ace_integration.py": "b68b192a227484b163643c0ca7dd39afd6f90ac757072461382cc69975d61d2e",
+    "tests/test_ace_adapter.py": "df96046a7c16340cbe4e79a3c6819c49a9af19a223f047fa316cc13e73d065d6"
+  },
+  "unit_tests_total": 37,
+  "unit_tests_passed": 33,
+  "unit_tests_skipped": 4,
+  "skipped_reason": "B/C data-dependent tests not enabled in this small A-focused verification",
+  "integration": "passed",
+  "real_model_calls": 0,
+  "live_libraries": [
+    {
+      "task": "A",
+      "folder": "/home/captain/projects/FINAL/rsi-openevolve-harness/state/live/A/83b5f23d693ac006",
+      "records": 0,
+      "entries": 0,
+      "jobs": {},
+      "calls": {}
+    },
+    {
+      "task": "B",
+      "folder": "/home/captain/projects/FINAL/rsi-openevolve-harness/state/live/B/df5d2013d9026c8c",
+      "records": 0,
+      "entries": 0,
+      "jobs": {},
+      "calls": {}
+    },
+    {
+      "task": "C",
+      "folder": "/home/captain/projects/FINAL/rsi-openevolve-harness/state/live/C/98b0641be8e69b09",
+      "records": 0,
+      "entries": 0,
+      "jobs": {},
+      "calls": {}
+    }
+  ],
+  "L_source_unchanged": true
+}

@@ -1,0 +1,36 @@
+{
+  "stage_id": "round-01",
+  "source_sha256": "sha256:0cc747f9998c5d7ee1e4eac6aec0db9f5ed4d2de149a1b1cbe689cce6b6aaca7",
+  "task_type": "regression",
+  "method": "group_stratified",
+  "group_key": [
+    "source_subset",
+    "unit"
+  ],
+  "seed": 42,
+  "select_ids": [
+    "fd001_train_u0071_c00001",
+    "fd001_train_u0071_c00002",
+    "fd001_train_u0071_c00003",
+    "..."
+  ],
+  "gate_ids": [
+    "fd001_train_u0072_c00001",
+    "fd001_train_u0072_c00002",
+    "fd001_train_u0072_c00003",
+    "..."
+  ],
+  "counts": {
+    "select": {
+      "rows": 11817,
+      "groups": 55
+    },
+    "gate": {
+      "rows": 11232,
+      "groups": 51
+    }
+  },
+  "warnings": [],
+  "provisional": true,
+  "manifest_sha256": "sha256:026d090660037c47df364652893ca316e5cd29252e42fdf7f292e3208acac1d3"
+}

@@ -1,0 +1,24 @@
+metrics: {"combined_score": 1.0257183666616434, "primary_ratio": 1.0257092757525526}
+[状态] 评估成功；续训规则全部通过（步数 80→100，轮次 20→25，标准化和网络结构未改）
+[得分] combined_score=1.0257（1.0=与起点检查点持平）  macro_f1=0.7337，起点 0.7153，官方续训 0.7337
+  辅助指标: accuracy=0.8909（起点 0.8828）
+  护栏: 全部通过
+[症状与建议]
+  - CLASS_NEVER_PREDICTED: Acetaldehyde 一次都没被预测出来（挑选集 55 个，训练集 30 个）。建议：在 sample_weights 里提高该类样本的权重（例如按类别频率的倒数加权）
+  - LABEL_SHIFT: 挑选集与训练集的类别占比差异很大（总变差距离 0.34）。建议：训练集的类别比例不代表新数据：不要让模型过度偏向训练集里的大类
+[训练曲线] 本轮训练 5 轮，选用第 5 轮
+  训练损失: 0.133 0.1276 0.1192 0.1148 0.1121
+  挑选集 macro_f1: 起点 0.7153 → 0.7365 0.7174 0.7216 0.7195 0.7337
+  学习率: 0.003 0.003 0.003 0.003 0.003
+[按类别]
+  Ethanol: P=0.559 R=0.927 F1=0.697 挑选集82个 预测136个
+  Ethylene: P=0.97 R=0.964 F1=0.967 挑选集167个 预测166个
+  Ammonia: P=0.98 R=1 F1=0.99 挑选集50个 预测51个
+  Acetaldehyde: P=- R=0 F1=0 挑选集55个 预测0个
+  Acetone: P=1 R=0.996 F1=0.998 挑选集266个 预测265个
+  Toluene: P=0.6 R=1 F1=0.75 挑选集3个 预测5个
+  主要混淆: Acetaldehyde→Ethanol 54个；Ethylene→Ethanol 6个；Ethanol→Ethylene 5个；Ethanol→Ammonia 1个
+[相对官方续训的变化] accuracy +0，macro_f1 +0
+  各类召回率变化: Ethanol +0，Ethylene +0，Ammonia +0，Acetaldehyde +0，Acetone +0，Toluene +0
+[模型内部] tanh 饱和 22.3%（起点 20.8%）；梯度裁剪触发率 0 0 0 0 0 %；权重相对起点变化 5.9%；样本权重 全部相同；batch=128，训练耗时 0.02s
+[最自信的错误] Ethanol→Ethylene ×1（置信度最高 0.98）；Acetaldehyde→Ethanol ×4（置信度最高 0.98）

@@ -1,0 +1,171 @@
+{
+  "status": "passed",
+  "real_external_model_calls": 0,
+  "fixture_ace_role_calls": 6,
+  "real_training_tasks": [
+    "A"
+  ],
+  "real_A_fixed_training_executions": 2,
+  "real_training_improvement_claimed": false,
+  "ABC": [
+    {
+      "task": "A",
+      "real_training": {
+        "candidate_metrics": {
+          "accuracy": 0.8908507223113965,
+          "macro_f1": 0.7337384073531,
+          "macro_f1_all": 0.7337384073531,
+          "weighted_f1": 0.8602115638612404,
+          "balanced_accuracy": 0.814523621013978
+        },
+        "split": {
+          "select": {
+            "rows": 623,
+            "labels": {
+              "Acetaldehyde": 55,
+              "Acetone": 266,
+              "Ammonia": 50,
+              "Ethanol": 82,
+              "Ethylene": 167,
+              "Toluene": 3
+            }
+          },
+          "gate": {
+            "rows": 621,
+            "labels": {
+              "Acetaldehyde": 54,
+              "Acetone": 266,
+              "Ammonia": 50,
+              "Ethanol": 82,
+              "Ethylene": 167,
+              "Toluene": 2
+            }
+          }
+        },
+        "flags": [
+          {
+            "code": "CLASS_NEVER_PREDICTED",
+            "detail": "Acetaldehyde 一次都没被预测出来（挑选集 55 个，训练集 30 个）",
+            "hint": "在 sample_weights 里提高该类样本的权重（例如按类别频率的倒数加权）"
+          },
+          {
+            "code": "LABEL_SHIFT",
+            "detail": "挑选集与训练集的类别占比差异很大（总变差距离 0.34）",
+            "hint": "训练集的类别比例不代表新数据：不要让模型过度偏向训练集里的大类"
+          }
+        ],
+        "fixed_training_executions": 2,
+        "explanation": "stage reference + identical initial policy; both resume 5 epochs; not Agent optimization"
+      },
+      "scope": {
+        "task": "A",
+        "task_type": "classification",
+        "unit": "class",
+        "source_hashes": {
+          "train_path": "c724014feb2c968d144e167f4997d2ad2125df3825abf4306c9c87c8f08de6c0",
+          "validation_path": "6be1370388bf67d017f7426a51e149a65baf9bc1186f5f41f6731ce5006ffbee",
+          "parent_checkpoint": "fd1e08b2aad08b2e9754f9b2dfdc029481c0da7ecdedca0abb0ec6fcc818c757"
+        },
+        "split_manifest": null,
+        "split_options": {
+          "min_groups": 4
+        },
+        "seed": 42,
+        "spec_file": null,
+        "protocol": "selection-feedback-only-v1"
+      },
+      "state": {
+        "task": "A",
+        "folder": "/home/dino/Documents/rsi-ace-staging-20261115/rsi-openevolve-harness/state/smoke/A/83b5f23d693ac006",
+        "records": 1,
+        "entries": 1,
+        "jobs": {
+          "done": 1
+        },
+        "calls": {
+          "fixture": 2
+        }
+      },
+      "prompt_version": "0d2777cf6197",
+      "entry_injected_next_prompt": true,
+      "replay_added_duplicates": false,
+      "live_library_entries": 0
+    },
+    {
+      "task": "B",
+      "real_training": null,
+      "scope": {
+        "task": "B",
+        "task_type": "regression",
+        "unit": "minutes",
+        "source_hashes": {
+          "train_path": "71b2663fffd3d7ef6dca8a7b3feb31c3feb96c57f385335d03041a5fa431054a",
+          "validation_path": "23673a66bc22a166bf2f47b18f9c9d594f7e66a9aad88ddbccbcaea2310d9eb3",
+          "parent_checkpoint": "c7d819fcee9d25459c583b5ffdb35593d4a47b524ed152d0226bf81a283314b4"
+        },
+        "split_manifest": null,
+        "split_options": {
+          "min_groups": 4
+        },
+        "seed": 42,
+        "spec_file": null,
+        "protocol": "selection-feedback-only-v1"
+      },
+      "state": {
+        "task": "B",
+        "folder": "/home/dino/Documents/rsi-ace-staging-20261115/rsi-openevolve-harness/state/smoke/B/df5d2013d9026c8c",
+        "records": 1,
+        "entries": 1,
+        "jobs": {
+          "done": 1
+        },
+        "calls": {
+          "fixture": 2
+        }
+      },
+      "prompt_version": "9d542c9a954a",
+      "entry_injected_next_prompt": true,
+      "replay_added_duplicates": false,
+      "live_library_entries": 0
+    },
+    {
+      "task": "C",
+      "real_training": null,
+      "scope": {
+        "task": "C",
+        "task_type": "regression",
+        "unit": "cycles",
+        "source_hashes": {
+          "train_path": "fcfaeaf1e50a0cc01766dfba5fd34c7369f1fe14bf583111837e847865fac281",
+          "validation_path": "0cc747f9998c5d7ee1e4eac6aec0db9f5ed4d2de149a1b1cbe689cce6b6aaca7",
+          "parent_checkpoint": "98ec6e30e38aee56ca15b7d624a8f412226d46fe97b170667a567601c700bc4e"
+        },
+        "split_manifest": null,
+        "split_options": {
+          "min_groups": 4
+        },
+        "seed": 42,
+        "spec_file": null,
+        "protocol": "selection-feedback-only-v1"
+      },
+      "state": {
+        "task": "C",
+        "folder": "/home/dino/Documents/rsi-ace-staging-20261115/rsi-openevolve-harness/state/smoke/C/98b0641be8e69b09",
+        "records": 1,
+        "entries": 1,
+        "jobs": {
+          "done": 1
+        },
+        "calls": {
+          "fixture": 2
+        }
+      },
+      "prompt_version": "20ccb0ac25a5",
+      "entry_injected_next_prompt": true,
+      "replay_added_duplicates": false,
+      "live_library_entries": 0
+    }
+  ],
+  "protected_files_unchanged": 166,
+  "scope": "ACE upstream Reflector/Curator integration with simulated replies; no real Qwen or RSI efficacy result"
+}

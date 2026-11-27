@@ -1,0 +1,31 @@
+# 当前策略的评测结果
+- combined_score: {fitness_score}（1.0 = 与起点检查点持平，越大越好）
+
+{artifacts}
+
+# 搜索经验（playbook）
+{playbook}
+
+# 最近无效的尝试（不要重复这些改动）
+{recent_failures}
+
+# 同一搜索分支上的其他策略
+{evolution_history}
+
+# 当前策略
+```{language}
+{current_program}
+```
+
+# 任务
+重写当前策略使 combined_score 提高。必须保留文件开头的说明、import 和两行 EVOLVE-BLOCK 标记，
+只改标记之间的代码；钩子的名字、参数、返回值形状不能变；只能用 numpy（np）和 math。
+
+先写两行说明：
+HYPOTHESIS: 一句话说明依据哪条证据、改了什么、预期什么变好
+USED_BULLETS: [参考到的经验条目编号；没有就写空的方括号]
+
+然后给出完整的新程序：
+```{language}
+# 完整程序
+```

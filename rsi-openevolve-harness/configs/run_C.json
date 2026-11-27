@@ -1,0 +1,54 @@
+{
+  "task_name": "C",
+  "stage_id": "ace-live-C",
+  "train_path": "/home/dino/Documents/cpu-baselines-20261110-v1/C/public/train.jsonl",
+  "validation_path": "/home/dino/Documents/cpu-baselines-20261110-v1/C/public/validation.jsonl",
+  "parent_checkpoint": "/home/dino/Documents/cpu-baselines-20261110-v1/C/checkpoint.npz",
+  "work_dir": "/home/dino/Documents/rsi-openevolve-harness/runs/live/C",
+  "seed": 42,
+  "limits": {
+    "max_epochs": 5,
+    "train_timeout_s": 20,
+    "cpu_threads": 1
+  },
+  "split": {
+    "min_groups": 4
+  },
+  "records": {
+    "include_prompt": true
+  },
+  "prompt": {
+    "playbook_max_chars": 2500,
+    "recent_failures": 3
+  },
+  "ace": {
+    "module": "team_ace",
+    "batch_size": 1,
+    "mode": "disabled",
+    "storage_root": "/home/dino/Documents/rsi-openevolve-harness/state/live",
+    "record_origin": "live_training",
+    "max_total_calls": 0,
+    "live_calls_approved": false,
+    "model": null,
+    "api_base": null,
+    "api_key_env": null,
+    "scope": {
+      "task": "C",
+      "task_type": "regression",
+      "unit": "cycles",
+      "source_hashes": {
+        "train_path": "fcfaeaf1e50a0cc01766dfba5fd34c7369f1fe14bf583111837e847865fac281",
+        "validation_path": "0cc747f9998c5d7ee1e4eac6aec0db9f5ed4d2de149a1b1cbe689cce6b6aaca7",
+        "parent_checkpoint": "98ec6e30e38aee56ca15b7d624a8f412226d46fe97b170667a567601c700bc4e"
+      },
+      "split_manifest": null,
+      "split_options": {
+        "min_groups": 4
+      },
+      "seed": 42,
+      "spec_file": null,
+      "protocol": "selection-feedback-only-v1"
+    }
+  },
+  "playbook_path": "/home/dino/Documents/rsi-openevolve-harness/state/live/C/98b0641be8e69b09/playbook.md"
+}

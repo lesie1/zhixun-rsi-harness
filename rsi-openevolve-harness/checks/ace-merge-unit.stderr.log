@@ -1,0 +1,42 @@
+test_abc_upstream_roles_are_isolated_candidates (test_ace_adapter.AdapterTests.test_abc_upstream_roles_are_isolated_candidates) ... ok
+test_blocked_worker_is_killed_and_evidence_survives (test_ace_adapter.AdapterTests.test_blocked_worker_is_killed_and_evidence_survives) ... ok
+test_budget_and_disabled_mode (test_ace_adapter.AdapterTests.test_budget_and_disabled_mode) ... ok
+test_cross_task_and_gate_records_rejected (test_ace_adapter.AdapterTests.test_cross_task_and_gate_records_rejected) ... ok
+test_duplicate_and_conflicting_evidence (test_ace_adapter.AdapterTests.test_duplicate_and_conflicting_evidence) ... ok
+test_forged_memory_rejected_atomically (test_ace_adapter.AdapterTests.test_forged_memory_rejected_atomically) ... ok
+test_malformed_reply_preserves_memory_and_retry (test_ace_adapter.AdapterTests.test_malformed_reply_preserves_memory_and_retry) ... ok
+test_retired_memory_stays_retired_and_operator_lock (test_ace_adapter.AdapterTests.test_retired_memory_stays_retired_and_operator_lock) ... ok
+test_tail_replay_is_idempotent (test_ace_adapter.AdapterTests.test_tail_replay_is_idempotent) ... ok
+test_versions_repair_and_rollback (test_ace_adapter.AdapterTests.test_versions_repair_and_rollback) ... ok
+test_initial_policy_is_clean (test_harness.ConstraintTest.test_initial_policy_is_clean) ... ok
+test_rejections (test_harness.ConstraintTest.test_rejections) ... ok
+test_constant_unique_contiguous_and_composite (test_harness.GroupTest.test_constant_unique_contiguous_and_composite) ... ok
+test_no_meta (test_harness.GroupTest.test_no_meta) ... ok
+test_macro_f1_by_hand (test_harness.MetricsTest.test_macro_f1_by_hand) ... ok
+test_macro_f1_ignores_absent_classes_but_all_variant_does_not (test_harness.MetricsTest.test_macro_f1_ignores_absent_classes_but_all_variant_does_not) ... ok
+test_regression_and_nasa (test_harness.MetricsTest.test_regression_and_nasa) ... ok
+test_b_has_no_independent_gate (test_harness.PackageTest.test_b_has_no_independent_gate) ... skipped 'set HARNESS_DATA_B to run this test'
+test_c_splits_by_engine (test_harness.PackageTest.test_c_splits_by_engine) ... skipped 'set HARNESS_DATA_C to run this test'
+test_evaluator_scores_and_rejects (test_harness.PackageTest.test_evaluator_scores_and_rejects) ... ok
+test_metrics_match_official_report_a (test_harness.PackageTest.test_metrics_match_official_report_a) ... ok
+test_metrics_match_official_report_b (test_harness.PackageTest.test_metrics_match_official_report_b) ... skipped 'set HARNESS_DATA_B to run this test'
+test_metrics_match_official_report_c (test_harness.PackageTest.test_metrics_match_official_report_c) ... skipped 'set HARNESS_DATA_C to run this test'
+test_runner_reproduces_official_trainer_byte_for_byte (test_harness.PackageTest.test_runner_reproduces_official_trainer_byte_for_byte) ... ok
+test_training_timeout_is_reported (test_harness.PackageTest.test_training_timeout_is_reported) ... ok
+test_used_bullets_and_hypothesis (test_harness.RecordParsingTest.test_used_bullets_and_hypothesis) ... ok
+test_auxiliary_gain_cannot_buy_primary_loss (test_harness.ScoringTest.test_auxiliary_gain_cannot_buy_primary_loss) ... ok
+test_direction_of_higher_is_better_metric (test_harness.ScoringTest.test_direction_of_higher_is_better_metric) ... ok
+test_group_regression_guard (test_harness.ScoringTest.test_group_regression_guard) ... ok
+test_guard_violation_is_penalised (test_harness.ScoringTest.test_guard_violation_is_penalised) ... ok
+test_parity_is_one (test_harness.ScoringTest.test_parity_is_one) ... ok
+test_rejects_unknown_or_mismatched_metric (test_harness.SpecTest.test_rejects_unknown_or_mismatched_metric) ... ok
+test_resolution_order (test_harness.SpecTest.test_resolution_order) ... ok
+test_classification_without_groups_keeps_every_class_on_both_sides (test_harness.SplitTest.test_classification_without_groups_keeps_every_class_on_both_sides) ... ok
+test_groups_never_straddle_and_split_is_deterministic (test_harness.SplitTest.test_groups_never_straddle_and_split_is_deterministic) ... ok
+test_manifest_validation (test_harness.SplitTest.test_manifest_validation) ... ok
+test_too_few_groups_means_no_split (test_harness.SplitTest.test_too_few_groups_means_no_split) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 14.799s
+
+OK (skipped=4)

@@ -1,0 +1,19 @@
+ACE 已合并到 FINAL（2026-11-15）
+
+主目录：/home/captain/projects/FINAL/rsi-openevolve-harness
+已合并 team_ace、测试、运行说明，并更新 A/B/C 配置为共享数据与 FINAL 内分区经验库。
+只修改原有配置和说明文件，训练/评估核心代码保持原样；C 与 L 开发来源均保留。
+没有安装依赖、没有启动真实模型调用、没有推送远程仓库。
+
+验证：37 项测试中 33 项通过，4 项 B/C 数据测试因本轮不启用而跳过；没有失败。
+A 实际固定续训反馈 → 队友记录回调 → ACE 模拟反思/整理 → 下一轮提示注入，联调通过。
+B/C 本轮仅验证经验接口。联调真实模型调用 0；模拟经验与正式经验库隔离。
+正式经验库为空，真实模型调用默认关闭，尚不能证明 ACE/Qwen 提升效果。
+
+使用现有解释器，在上述主目录运行：
+/home/captain/projects/environment/.venv/bin/python -m team_ace status --config configs/run_A.json
+完整操作说明：docs/ACE_ADAPTER.txt
+测试日志：checks/ace-merge-unit.stderr.log、checks/integration.json
+
+合并前备份：/home/captain/projects/FINAL/backups/rsi-openevolve-harness-before-ace-20261115-164045.zip
+合并清单：/home/captain/projects/FINAL/merge-records/ace-20261115-164045/merge.json

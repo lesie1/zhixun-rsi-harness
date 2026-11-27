@@ -1,0 +1,4 @@
+### 策略 {attempt_number}
+- 改动: {changes}
+- 指标: {performance}
+- 相对它的父版本: {outcome}

@@ -1,0 +1,5 @@
+### 策略 {program_number}（combined_score: {score}）
+```{language}
+{program_snippet}
+```
+指标: {key_features}

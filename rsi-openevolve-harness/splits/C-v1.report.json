@@ -1,0 +1,112 @@
+{
+  "tool": "team_split",
+  "config": "/home/dino/Documents/rsi-openevolve-harness/configs/run_C.json",
+  "manifest": "/home/dino/Documents/rsi-openevolve-harness/splits/C-v1.json",
+  "manifest_sha256": "sha256:bcf9f714d05a8d253033c80cac0a9d4e6bd0fe1a5c9866e69d7f2034c78e10ee",
+  "options": {
+    "seed": 42,
+    "min_groups": 4,
+    "time_blocks": 10,
+    "method": "auto",
+    "balance": "groups"
+  },
+  "problems": [],
+  "report": {
+    "method": "group_stratified",
+    "group_key": [
+      "source_subset",
+      "unit"
+    ],
+    "total_rows": 23049,
+    "sides": {
+      "select": {
+        "rows": 11817,
+        "share_of_all": 0.5126903553299492,
+        "first_line": 1,
+        "last_line": 22736
+      },
+      "gate": {
+        "rows": 11232,
+        "share_of_all": 0.4873096446700508,
+        "first_line": 209,
+        "last_line": 23049
+      }
+    },
+    "warnings": [],
+    "targets": {
+      "select": {
+        "mean": 113.88525006346788,
+        "max": 380.0,
+        "quartiles": [
+          0.0,
+          53.0,
+          107.0,
+          163.0,
+          380.0
+        ]
+      },
+      "gate": {
+        "mean": 120.5281339031339,
+        "max": 434.0,
+        "quartiles": [
+          0.0,
+          55.0,
+          110.0,
+          168.0,
+          434.0
+        ]
+      },
+      "all_std": 79.35177301206943,
+      "mean_shift_sd": 0.08371437193540265
+    },
+    "groups": {
+      "select": 55,
+      "gate": 51
+    },
+    "coarse_key": [
+      "source_subset"
+    ],
+    "coarse_breakdown": {
+      "FD001": {
+        "select": {
+          "groups": 8,
+          "rows": 1690
+        },
+        "gate": {
+          "groups": 7,
+          "rows": 1520
+        }
+      },
+      "FD002": {
+        "select": {
+          "groups": 20,
+          "rows": 3722
+        },
+        "gate": {
+          "groups": 19,
+          "rows": 3859
+        }
+      },
+      "FD003": {
+        "select": {
+          "groups": 8,
+          "rows": 1857
+        },
+        "gate": {
+          "groups": 7,
+          "rows": 1698
+        }
+      },
+      "FD004": {
+        "select": {
+          "groups": 19,
+          "rows": 4548
+        },
+        "gate": {
+          "groups": 18,
+          "rows": 4155
+        }
+      }
+    }
+  }
+}

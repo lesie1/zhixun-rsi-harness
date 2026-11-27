@@ -1,0 +1,172 @@
+--- a/openevolve/process_parallel.py
++++ b/openevolve/process_parallel.py
+@@ -3,8 +3,10 @@
+ """
+ 
+ import asyncio
++import importlib
+ import logging
+ import multiprocessing as mp
++import os
+ import pickle
+ import random
+ import signal
+@@ -24,6 +26,53 @@
+ 
+ logger = logging.getLogger(__name__)
+ 
++# ---------------------------------------------------------------------------
++# Harness extension points (added by rsi-openevolve-harness, see
++# docs/OPENEVOLVE_PATCH.md). Both are optional and configured through
++# environment variables holding "package.module:function":
++#   OPENEVOLVE_PROMPT_EXTRAS   worker side, returns extra prompt template variables
++#   OPENEVOLVE_ITERATION_HOOK  main process, called once per finished iteration
++# A failing extension never aborts the evolution run.
++# ---------------------------------------------------------------------------
++_EXTENSION_CACHE: Dict[str, Any] = {}
++
++
++def _load_extension(env_name: str):
++    """Resolve the callable named by environment variable `env_name` (cached per process)"""
++    spec = os.environ.get(env_name)
++    if not spec:
++        return None
++    cached = _EXTENSION_CACHE.get(env_name)
++    if cached is not None and cached[0] == spec:
++        return cached[1]
++    module_name, _, attr = spec.partition(":")
++    func = getattr(importlib.import_module(module_name), attr)
++    _EXTENSION_CACHE[env_name] = (spec, func)
++    return func
++
++
++def _prompt_extras(context: Dict[str, Any]) -> Dict[str, str]:
++    """Extra keyword arguments for PromptSampler.build_prompt (empty when no provider is set)"""
++    try:
++        provider = _load_extension("OPENEVOLVE_PROMPT_EXTRAS")
++        if provider is None:
++            return {}
++        return {str(key): str(value) for key, value in (provider(context) or {}).items()}
++    except Exception:
++        logger.exception("Prompt extras provider failed; continuing without extras")
++        return {}
++
++
++def _notify_iteration(event: Dict[str, Any]) -> None:
++    """Report one finished iteration to the optional iteration hook"""
++    try:
++        hook = _load_extension("OPENEVOLVE_ITERATION_HOOK")
++        if hook is not None:
++            hook(event)
++    except Exception:
++        logger.exception("Iteration hook failed; continuing")
++
++
+ _worker_event_loop = None
+ 
+ 
+@@ -278,6 +327,17 @@
+             parent_changes_desc = None
+             child_changes_desc = None
+ 
++        # Harness extension: extra template variables (e.g. playbook, recent failures)
++        prompt_extras = _prompt_extras(
++            {
++                "iteration": iteration,
++                "island": db_snapshot.get("sampling_island"),
++                "parent_id": parent.id,
++                "parent_metrics": parent.metrics,
++                "evolution_mode": evolution_mode,
++            }
++        )
++
+         prompt = _worker_prompt_sampler.build_prompt(
+             current_program=parent.code,
+             parent_program=parent.code,
+@@ -292,6 +352,7 @@
+             feature_dimensions=db_snapshot.get("feature_dimensions", []),
+             current_changes_description=parent_changes_desc,
+             island_id=db_snapshot.get("sampling_island"),
++            **prompt_extras,
+         )
+ 
+         iteration_start = time.time()
+@@ -655,6 +716,11 @@
+         logger.info("Graceful shutdown requested...")
+         self.shutdown_event.set()
+ 
++    def _program_dict(self, program_id: Optional[str]) -> Optional[Dict[str, Any]]:
++        """A program as a plain dict for the iteration hook (None when it left the database)"""
++        program = self.database.get(program_id) if program_id else None
++        return program.to_dict() if program else None
++
+     def _create_database_snapshot(self) -> Dict[str, Any]:
+         """Create a serializable snapshot of the database state"""
+         # Only include necessary data for workers
+@@ -862,6 +928,20 @@
+                             token_usage=result.token_usage,
+                             island_id=result.target_island,
+                         )
++                    _notify_iteration(
++                        {
++                            "kind": "failed",
++                            "iteration": completed_iteration,
++                            "error": result.error,
++                            "parent_id": result.parent_id,
++                            "parent_program": self._program_dict(result.parent_id),
++                            "prompt": result.prompt,
++                            "llm_response": result.llm_response,
++                            "island": result.target_island,
++                            "evolution_mode": result.evolution_mode,
++                            "token_usage": result.token_usage,
++                        }
++                    )
+                 elif result.child_program_dict:
+                     successful_iterations += 1
+ 
+@@ -877,6 +957,21 @@
+                         target_island=result.target_island,
+                     )
+                     if admitted_id is None:
++                        _notify_iteration(
++                            {
++                                "kind": "db_rejected",
++                                "iteration": completed_iteration,
++                                "child_program": child_program.to_dict(),
++                                "parent_id": result.parent_id,
++                                "parent_program": self._program_dict(result.parent_id),
++                                "prompt": result.prompt,
++                                "llm_response": result.llm_response,
++                                "artifacts": result.artifacts,
++                                "island": result.target_island,
++                                "evolution_mode": result.evolution_mode,
++                                "token_usage": result.token_usage,
++                            }
++                        )
+                         raise _CandidateRejected(child_program.id)
+ 
+                     # Store artifacts
+@@ -980,6 +1075,23 @@
+ 
+                     # Check for new best
+                     is_new_best = self.database.best_program_id == child_program.id
++                    _notify_iteration(
++                        {
++                            "kind": "evaluated",
++                            "iteration": completed_iteration,
++                            "child_program": child_program.to_dict(),
++                            "parent_id": result.parent_id,
++                            "parent_program": self._program_dict(result.parent_id),
++                            "prompt": result.prompt,
++                            "llm_response": result.llm_response,
++                            "artifacts": result.artifacts,
++                            "island": result.target_island,
++                            "evolution_mode": result.evolution_mode,
++                            "token_usage": result.token_usage,
++                            "iteration_time": result.iteration_time,
++                            "is_new_best": is_new_best,
++                        }
++                    )
+                     if is_new_best:
+                         logger.info(
+                             f"🌟 New best solution found at iteration {completed_iteration}: "

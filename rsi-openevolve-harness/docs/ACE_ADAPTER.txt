@@ -1,0 +1,82 @@
+ACE 接入：实验记录 → 候选经验 → 下一轮提示
+
+ACE 适配模块已合并到 FINAL；L 保留开发来源，C 保留队友原始交付，不另建 Python 环境。
+服务器目录：/home/captain/projects/FINAL/rsi-openevolve-harness
+解释器：/home/captain/projects/environment/.venv/bin/python
+队友框架：/home/captain/projects/FINAL/rsi-openevolve-harness
+上游 ACE：/home/captain/projects/environment/vendor/ace
+
+实际复用的上游代码
+加载上游 ace/core/reflector.py、curator.py 及其提示模板，使用 Reflector.reflect 和 Curator.propose_operations。
+OpenEvolve 继续承担训练方案生成，ACE 只接收实验反馈并提出经验新增建议。
+按模块加载必要的 ACE 角色，避免加载本次不需要的嵌入模型；没有下载模型。
+在独立工作进程中替换上游可无限重试的调用层；上游源码保持不变。
+禁用上游自动查找 .env，凭证只可来自配置明确指定的环境变量；不会读取其他项目密钥。
+ACE 来源 https://github.com/ace-agent/ace，Apache-2.0；现用提交 82709de050e1db6e6ef2f07bcb0393560b94992a。
+
+最小操作
+先进入项目根目录 /home/captain/projects/FINAL/rsi-openevolve-harness；下文 python 均指上面的共享环境解释器。
+python -m team_ace init
+  本次合并已建立 A/B/C 配置，无须再初始化；此命令用于全新副本，不覆盖现有配置。
+python -m team_ace status --config configs/run_A.json
+python -m team_ace flush --config configs/run_A.json
+  从同学框架的 iterations.jsonl 补处理尾批/遗漏回调，可重复执行，不会重复记录。
+python -m team_ace process --config configs/run_A.json --max-jobs 1 --seconds 45
+  处理最多一个队列任务；默认正式配置 mode=disabled，不调用模型。
+python -m team_ace serve --config configs/run_A.json --max-jobs 3 --seconds 60
+  有限时间处理队列，可与搜索并行；退出后不会留下常驻服务。
+
+连接同学的框架
+运行进程的 PYTHONPATH 需要包含 /home/captain/projects/FINAL/rsi-openevolve-harness。
+使用 configs/run_A.json 作为 scripts/run_evolve.py 的 --run-config，B/C 同理。
+此配置已经指定 ace.module=team_ace、batch_size=1、共享数据绝对路径、任务专属 playbook_path。
+队友入口会调用 team_ace.on_batch；该函数只快速落盘，绝不等待网络。
+单独的 process/serve 读取队列、调用 ACE、原子更新经验文件，后续提示由队友框架自动重新读取。
+训练和评估核心代码保持原样。结束/恢复时运行 flush，补足任意批大小下的最后几条记录。
+当前未配置真实模型，不能直接使用队友默认的 60 轮、2 并发配置启动正式搜索。
+真实搜索尚需确认允许的 PyTRiO/Qwen 接口，并解决队友代码执行的文件隔离/内存限制。
+
+A/B/C 分开管理
+state/live/A/<scope>/、state/live/B/<scope>/、state/live/C/<scope>/ 是正式目录。
+scope 绑定数据、起点检查点的 SHA-256、任务类型/单位、划分与评分配置。
+换数据、起点、划分或指标配置后应新建配置与目录，旧经验默认不复用；不将不同条件混为事实。
+每份目录有 memory.sqlite3（证据、队列、候选、调用记录）、playbook.md、view.json 和 versions/。
+用户不需要手动编辑数据库；也不要把测试目录的文件复制到正式目录。
+
+可信性边界
+每条经验只能处于 candidate（待验证）或 retired（停用）；模型不能自行宣称已验证。
+保存实测结果与假设的区别，拒绝无来源的经验、虚构实验 ID、跨任务记录和 gate/test 反馈。
+记录按 run_id、stage_id、task、iteration、program_id、kind 去重；同一标识冲突会报错。
+同一建议合并已有证据，失败/退化结果保留；结果关联不被当成因果贡献。
+模型自报 helpful/harmful 标签只留作原始输出，不据此给经验升级或加分。
+原始记录中的 used_bullets 仅保留审计用途，本版没有宣称实现可靠的条目贡献归因。
+本版以精确规范化文本去重，不声称实现语义去重。
+输出不超过 1900 字符，低于队友提示的 2500 字符限额；完整历史保存在数据库。
+最终验收/隐藏测试的结果不能送回经验生成；本版不会自动执行效果验证或升级技能。
+
+恢复和回退
+回调落盘与入队是一个事务；工作进程失败不会丢失实验记录。
+python -m team_ace retry --config configs/run_A.json
+  手动恢复失败任务；每任务最多两次尝试，失败调用仍占总预算。
+python -m team_ace retire --config configs/run_A.json --entry-id A-某个编号
+  停用候选，保留历史证据。
+python -m team_ace rollback --config configs/run_A.json --version 已有的12位版本号
+  恢复该任务/条件下的旧经验版本，不删除实验和调用记录。
+python -m team_ace render --config configs/run_A.json
+  从数据库修复中断后尚未更新的经验文件。
+
+本次测试与真实调用的区别
+tests/test_ace_adapter.py：可靠性与任务隔离测试。
+scripts/check_ace_integration.py：A 用真实数据、原始固定策略做两次续训（框架参考与同一候选）；
+B/C 不训练，用明确标注的失败输入测试接口；ACE 的两种角色均接模拟回复。
+state/smoke/ 和 state/tests/ 中的经验仅供接口测试；正式 state/live/ 初始为空。
+没有 Qwen 真实调用，也没有证明 Agent 或递归自改进有效。
+
+资源和模型预算
+每次 CLI 最多 3 个工作任务，每任务最多两次角色调用；整次 process/serve 有截止时间。
+子进程墙钟上限通常 35 秒；监测 RSS 超过 384 MiB 或系统可用不足 250 MiB 时终止进程组。
+内存监测是采样停止机制，不是任意代码安全沙箱或操作系统硬内存配额。
+每个任务/条件目录有持久化的 max_total_calls；失败也计数，传输层不自动重试。
+真实模式要求显式 endpoint、model、api_key_env、live_calls_approved，默认全部关闭/未配置。
+每次输出上限 1024 tokens，输入有字符上限并保存提供方实际 usage；字符限制不是 Qwen 总 token 硬限额。
+首次收费调用前仍需确认实际模型、价格、额度和总 token 预算；本次没有产生模型费用。

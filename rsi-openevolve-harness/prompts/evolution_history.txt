@@ -1,0 +1,9 @@
+## 得分最高的几个策略各自做过的改动
+
+{previous_attempts}
+
+## 得分最高的策略（完整代码）
+
+{top_programs}
+
+{inspirations_section}

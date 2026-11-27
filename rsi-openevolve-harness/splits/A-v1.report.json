@@ -1,0 +1,55 @@
+{
+  "tool": "team_split",
+  "config": "/home/dino/Documents/rsi-openevolve-harness/configs/run_A.json",
+  "manifest": "/home/dino/Documents/rsi-openevolve-harness/splits/A-v1.json",
+  "manifest_sha256": "sha256:17a2507c34aefb7befaa3ec57e54d5d6112673f6c921c17a717647130dc7891a",
+  "options": {
+    "seed": 42,
+    "min_groups": 4,
+    "time_blocks": 10,
+    "method": "auto",
+    "balance": "groups"
+  },
+  "problems": [],
+  "report": {
+    "method": "class_time",
+    "group_key": null,
+    "total_rows": 1244,
+    "sides": {
+      "select": {
+        "rows": 623,
+        "share_of_all": 0.5008038585209004,
+        "first_line": 1,
+        "last_line": 978
+      },
+      "gate": {
+        "rows": 621,
+        "share_of_all": 0.4991961414790997,
+        "first_line": 230,
+        "last_line": 1244
+      }
+    },
+    "warnings": [
+      "类别 Toluene 在验收集只有 2 个（少于 5），这一类的验收结论不可靠"
+    ],
+    "classes": {
+      "select": {
+        "Acetaldehyde": 55,
+        "Acetone": 266,
+        "Ammonia": 50,
+        "Ethanol": 82,
+        "Ethylene": 167,
+        "Toluene": 3
+      },
+      "gate": {
+        "Acetaldehyde": 54,
+        "Acetone": 266,
+        "Ammonia": 50,
+        "Ethanol": 82,
+        "Ethylene": 167,
+        "Toluene": 2
+      }
+    },
+    "class_tv_distance": 0.0029207796672378996
+  }
+}
