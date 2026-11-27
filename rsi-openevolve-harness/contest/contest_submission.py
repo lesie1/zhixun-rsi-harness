@@ -37,9 +37,15 @@ from pathlib import Path
 
 APP = Path(__file__).resolve().parent
 RSI = APP / "rsi"
-for path in (RSI, APP):
-    if str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+# /app/harness.py is the SDK entry file and /app/rsi/harness/ is our package: both are importable as "harness".
+# rsi/ must always come first, however the platform starts the process (a plain `python3 /app/harness.py` puts
+# /app first by itself, the 2026-11-27 entry pre-check did not), and the entry file must not stay cached as "harness".
+for path in (str(RSI), str(APP)):
+    while path in sys.path:
+        sys.path.remove(path)
+sys.path[0:0] = [str(RSI), str(APP)]
+if "harness" in sys.modules and not hasattr(sys.modules["harness"], "__path__"):
+    del sys.modules["harness"]
 
 TASKS = ("classification", "regression")
 PREDICT_ARGV = ["python3", "/app/harness.py", "predict"]

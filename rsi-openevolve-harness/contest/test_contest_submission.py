@@ -272,6 +272,25 @@ class ContestImageTest(unittest.TestCase):
                     self.assertAlmostEqual(got["outputs"]["value"], float(want[0]), places=6)
 
 
+class EntryPrecheckTest(unittest.TestCase):
+    """/app/harness.py (SDK entry) and /app/rsi/harness/ (our package) share the name "harness". The platform's
+    entry pre-check (2026-11-27) loaded the submission without /app at the front of sys.path, and v1.2 then
+    imported the entry file as "harness" and failed. Both ways must resolve to the package."""
+
+    def check(self, code):
+        env = dict(os.environ, PYTHONPATH=str(SDK))
+        out = subprocess.run([sys.executable, "-c", code], cwd=APP, env=env, capture_output=True, text=True, timeout=120)
+        self.assertEqual(out.returncode, 0, out.stderr[-2000:])
+        self.assertIn(str(Path("rsi") / "harness" / "runner.py"), out.stdout)
+
+    def test_app_not_on_path_beforehand(self):
+        self.check("import contest_submission\nfrom harness import runner\nprint(runner.__file__)")
+
+    def test_entry_file_already_imported_as_harness(self):
+        self.check(f"import sys\nsys.path.insert(0, {str(APP)!r})\nimport harness as entry\n"
+                   "import contest_submission\nfrom harness import runner\nprint(runner.__file__)")
+
+
 class NewRowsDecisionTest(unittest.TestCase):
     """decide_on_new_rows: judged on the new validation rows, with a guard on the older rows."""
 
