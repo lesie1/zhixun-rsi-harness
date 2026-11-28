@@ -1,0 +1,66 @@
+{
+  "schema": "C-experience.v1",
+  "enabled": true,
+  "namespace": "live",
+  "database": "/home/captain/projects/Y/C_actions_20261127/experience/live/cards.sqlite3",
+  "cards": [
+    {
+      "id": "CEXP-f6f3727e1bfa12bea69d",
+      "action": "pick_best_epoch",
+      "base_settings": {
+        "lr_scale": 1.0,
+        "lr_schedule": "constant",
+        "batch_size": null,
+        "weight_mode": "uniform",
+        "best_epoch": false,
+        "epochs": 5,
+        "loss_mode": "mse"
+      },
+      "candidate_settings": {
+        "lr_scale": 1.0,
+        "lr_schedule": "constant",
+        "batch_size": null,
+        "weight_mode": "uniform",
+        "best_epoch": true,
+        "epochs": 5,
+        "loss_mode": "mse"
+      },
+      "control_kind": "trained_settings",
+      "contexts": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "mixed_evidence": false,
+      "last_decision": "rmse_improved",
+      "last_guard_flags": [],
+      "last_change": {
+        "rmse_relative_gain": 0.013757808379413204,
+        "nasa_relative_change": -0.487293767000613,
+        "mae_relative_change": -0.01093248380890266,
+        "low_bias_delta": -0.6546346890580992,
+        "high_bias_delta": -1.5777935554075455
+      },
+      "prior_conditions": {
+        "low_overestimated": true,
+        "high_underestimated": true,
+        "worst_source": "FD003"
+      },
+      "same_context_seen": true,
+      "use": "prior selection evidence; retest before adoption",
+      "sources": [
+        {
+          "run": "20261127T094358Z-75ad7b",
+          "trial": "T0001",
+          "trial_sha256": "896cf16629d438a8f76148c953f1db6f6227c5c3e7b4e3bdb8f57a7e73598d5b",
+          "imported": true,
+          "verification": "real_provider_policy_and_selection_metric_check",
+          "context_id": "fb6d79a5c3723cbb7b3f7145a556e5b98bd1c1cf85034fa67ead94ca2b31e32a"
+        }
+      ]
+    }
+  ],
+  "events": 1,
+  "domains": 1,
+  "current_domain": "502d789b4f79c8baf44cb517403fcbfa55a26df4b96f2c0ddeaec46a09ebe3e5",
+  "new_events_this_process": 0,
+  "duplicate_replays_ignored": 1
+}

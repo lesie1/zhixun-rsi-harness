@@ -1,0 +1,38 @@
+{
+  "task_name": "C",
+  "stage_id": "C-delivery",
+  "train_path": "__CONFIGURE_DATA_ROOT__/public/train.jsonl",
+  "validation_path": "__CONFIGURE_DATA_ROOT__/public/validation.jsonl",
+  "parent_checkpoint": "../assets/official-C/checkpoint.npz",
+  "split_manifest": "../assets/C-v1.json",
+  "work_dir": "runs/stage",
+  "seed": 42,
+  "limits": {
+    "max_epochs": 5,
+    "train_timeout_s": 20,
+    "cpu_threads": 1
+  },
+  "split": {
+    "min_groups": 4
+  },
+  "feedback": {
+    "max_chars": 6000,
+    "top_k": 5
+  },
+  "records": {
+    "include_prompt": true
+  },
+  "ace": {
+    "module": "team_ace",
+    "mode": "disabled",
+    "batch_size": 0,
+    "max_total_calls": 0,
+    "live_calls_approved": false
+  },
+  "experience": {
+    "enabled": true,
+    "storage_root": "../state/experience",
+    "retrieve_k": 3,
+    "max_prompt_chars": 2600
+  }
+}

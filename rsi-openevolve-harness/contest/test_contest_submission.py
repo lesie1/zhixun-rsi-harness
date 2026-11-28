@@ -53,13 +53,29 @@ def start_frame(key, previous, verdict_ok=True):
             "current_validation": {}, "wall_seconds": 1800}
 
 
-def fake_model(agree):
-    counter = {"n": 0}
+PLANNER_ACTIONS = ("pick_best_epoch", "tail_error_1_1", "keep")
+C_STEPS = 3
+
+
+def fake_model(agree, planner_reply=None):
+    """Review requests get {"agree": ...}; the C agent's planner requests (recognised by its system prompt) get the
+    actions in PLANNER_ACTIONS in turn, or planner_reply verbatim."""
+    counter = {"n": 0, "turn": 0}
 
     def answer(messages, options):
         counter["n"] += 1
         assert options.get("max_tokens", 1) <= 512
-        body = json.dumps({"agree": agree, "reason": "测试替身的固定回复"}, ensure_ascii=False)
+        system = " ".join(str(m.get("content") or "") for m in messages if m.get("role") == "system")
+        if "C engine-RUL" in system:
+            if planner_reply is not None:
+                body = planner_reply
+            else:
+                action = PLANNER_ACTIONS[counter["turn"] % len(PLANNER_ACTIONS)]
+                counter["turn"] += 1
+                body = json.dumps({"action": action, "why": f"测试替身：检查 {action}", "used": ["BASE-PARENT"]},
+                                  ensure_ascii=False)
+        else:
+            body = json.dumps({"agree": agree, "reason": "测试替身的固定回复"}, ensure_ascii=False)
         return {"request_id": f"call-{counter['n']}", "choices": [{"message": {"role": "assistant", "content": body},
                                                                     "finish_reason": "stop"}]}
     return answer
@@ -83,12 +99,12 @@ class ContestImageTest(unittest.TestCase):
             self.assertEqual(info["protocol"], "contest.harness.workspace.v2")
             self.assertEqual(sorted(info["tasks"]), ["classification", "regression"])
 
-    def run_round(self, key, agree=True):
+    def run_round(self, key, agree=True, planner_reply=None):
         with tempfile.TemporaryDirectory() as t:
             tmp = Path(t)
             (tmp / "previous").mkdir()
             (tmp / "previous" / "checkpoint.npz").write_bytes((DATA / key / "checkpoint.npz").read_bytes())
-            host = Host(start_frame(key, tmp / "previous"), fake_model(agree))
+            host = Host(start_frame(key, tmp / "previous"), fake_model(agree, planner_reply))
             began = time.time()
             err_path = tmp / "stderr.txt"
             with open(err_path, "w", encoding="utf-8") as err:
@@ -114,8 +130,52 @@ class ContestImageTest(unittest.TestCase):
         for key in TASKS:
             with self.subTest(task=key):
                 record, host = self.run_round(key)
-                self.assertEqual(len(host.raw_messages), 1)        # exactly one model call
+                if key == "C":                                      # the C agent: one planner call per turn
+                    self.assertTrue(1 <= len(host.raw_messages) <= C_STEPS)
+                    self.check_c_agent_record(record)
+                else:
+                    self.assertEqual(len(host.raw_messages), 1)    # exactly one model call
                 print(f"{key}: selected {record['selected_artifact_id']}; {record['reason'][:300]}", file=sys.stderr)
+
+    def check_c_agent_record(self, record):
+        config = record["configuration"]
+        self.assertEqual(config["agent"], "C_agent_delivery_20261127")
+        self.assertEqual(config["judged_on"], "c_agent_gate_split")
+        self.assertTrue(1 <= len(config["steps"]) <= C_STEPS)
+        self.assertIn(config["decision"], ("adopt_candidate", "adopt_reference", "keep_parent"))
+        self.assertGreater(config["gate"]["rows"], 0)
+        self.assertIn("candidate_vs_parent", config["gate"]["comparisons"])
+        if config["decision"] == "keep_parent":
+            self.assertEqual(record["selected_artifact_id"], "baseline-C")
+        else:
+            self.assertEqual(record["selected_artifact_id"], "model-test-1")
+        self.assertIn("C 智能体本轮实验", record["reason"])
+        print(f"\nC agent: {[(s['action'], s['select_rmse'], s['decision']) for s in config['steps']]}; "
+              f"gate {config['gate']['rmse']} -> {config['decision']}", file=sys.stderr)
+        return config
+
+    def test_c_agent_invalid_replies_still_finish(self):
+        """Qwen answering with something that is not a menu action: every turn is recorded as invalid, nothing is
+        trained by the agent, and the round still ends through the final gate."""
+        if "C" not in TASKS:
+            self.skipTest("C not selected")
+        record, host = self.run_round("C", planner_reply="我觉得应该多训练几轮")
+        config = self.check_c_agent_record(record)
+        self.assertEqual(len(host.raw_messages), C_STEPS)
+        self.assertTrue(all(s["decision"] == "invalid_reply_or_execution_failure" for s in config["steps"]))
+
+    def test_c_agent_experience_carries_over(self):
+        """Round 1 writes experience cards into /state; round 2 (same data, state carried over) starts from them."""
+        if "C" not in TASKS:
+            self.skipTest("C not selected")
+        train = [l for l in (DATA / "C" / "public" / "train.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+        val = [l for l in (DATA / "C" / "public" / "validation.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+        first, second = self.run_rounds("C", [(train, val), (train, val)])
+        for record in (first, second):
+            self.check_c_agent_record(record)
+        self.assertGreater(first["configuration"]["experience"]["new_events_this_run"], 0)
+        self.assertEqual(first["configuration"]["experience"]["errors"], [])
+        self.assertEqual(second["configuration"]["experience"]["errors"], [])
 
     def test_second_round_trains_new_data_candidates(self):
         """Round 1 leaves the seen training ids in its state; round 2 (training = old rows + half of the public
@@ -157,7 +217,13 @@ class ContestImageTest(unittest.TestCase):
                 self.assertEqual(second["data"]["train_new_rows"], half)       # exactly the added rows are new
                 self.assertTrue(second["data"]["recent_candidates"])
                 if key == "A":
+                    self.assertNotIn("same_period", first["candidates"])
                     self.assertIn("recent+balanced", second["candidates"])
+                    self.assertIn("same_period", second["candidates"])
+                    cal = second["data"].get("same_period_calibration")
+                    self.assertIsNotNone(cal)
+                    self.assertEqual(cal["new_rows"], half)
+                    self.assertEqual(cal["updates"], 20)
                 else:                                                      # B uses the v1.2 new-rows candidates
                     self.assertIn("new_x10", second["candidates"])
                     self.assertIn("new_x30", second["candidates"])
@@ -196,7 +262,10 @@ class ContestImageTest(unittest.TestCase):
                 stderr = (tmp / f"stderr{index}.txt").read_text(encoding="utf-8")
                 self.assertIsNone(host.failure, stderr[-3000:])
                 self.assertEqual(process.returncode, 0, stderr[-3000:])
-                self.assertEqual(len(host.raw_messages), 1)                    # one model call every round
+                if key == "C":
+                    self.assertTrue(1 <= len(host.raw_messages) <= C_STEPS)    # one planner call per agent turn
+                else:
+                    self.assertEqual(len(host.raw_messages), 1)                # one model call every round
                 records.append(host.record)
         return records
 
@@ -231,6 +300,76 @@ class ContestImageTest(unittest.TestCase):
         self.assertIn("新验证样本", records[2]["reason"])
         print(f"\nB rounds: {[c['choice'] for c in (first, second, third)]}; round 3 {records[2]['reason'][:260]}",
               file=sys.stderr)
+
+    def test_a_same_period_adopted_resumes_and_predicts(self):
+        """When same_period wins on A, submit_candidate uploads its checkpoint with calibration metadata,
+        predict serves it cleanly, and the next round can resume from that checkpoint as parent."""
+        if "A" not in TASKS:
+            self.skipTest("A not in TASKS")
+        import shutil
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            app_copy = tmp / "app"
+            shutil.copytree(APP, app_copy)
+            for p in app_copy.rglob("*"):
+                if p.is_file():
+                    p.chmod(0o644)
+                elif p.is_dir():
+                    p.chmod(0o755)
+            cs_file = app_copy / "contest_submission.py"
+            txt = cs_file.read_text(encoding="utf-8")
+            txt = txt.replace("ADOPT_PROBABILITY = 0.90", "ADOPT_PROBABILITY = 0.0")
+            txt = txt.replace('GUARD = {"classification": ("accuracy", 0.02)', 'GUARD = {"classification": ("accuracy", 1.0)')
+            txt = txt.replace("better(task, metrics[name][primary], base[primary])", "True")
+            txt = txt.replace("candidates = candidate_policies(", "candidates = [] if rnd.round_index == 2 else candidate_policies(")
+            cs_file.write_text(txt, encoding="utf-8")
+
+            (tmp / "previous").mkdir()
+            (tmp / "previous" / "checkpoint.npz").write_bytes((DATA / "A" / "checkpoint.npz").read_bytes())
+            train = [l for l in (DATA / "A" / "public" / "train.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+            val = [l for l in (DATA / "A" / "public" / "validation.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+            half = len(val) // 2
+
+            for round_index, tr_lines, va_lines in [
+                (1, train, val),
+                (2, train + val[:half], val[half:]),
+                (3, train + val[:half + 20], val[half + 20:]),
+            ]:
+                (tmp / f"tr{round_index}.jsonl").write_text("\n".join(tr_lines) + "\n", encoding="utf-8")
+                (tmp / f"va{round_index}.jsonl").write_text("\n".join(va_lines) + "\n", encoding="utf-8")
+                frame = start_frame("A", tmp / "previous")
+                frame["round_index"] = round_index
+                proj = frame["task_contract"]["public_projection"]
+                proj["train_path"], proj["validation_path"] = str(tmp / f"tr{round_index}.jsonl"), str(tmp / f"va{round_index}.jsonl")
+                if round_index > 1:
+                    frame["state_path"] = str(tmp / "work" / f"rsi-round-{round_index - 1:02d}" / "state")
+                host = Host(frame, fake_model(True))
+                with open(tmp / f"err{round_index}.txt", "w", encoding="utf-8") as err:
+                    proc = subprocess.Popen([sys.executable, str(app_copy / "harness.py"), "train"], cwd=app_copy,
+                                            env=self.env(tmp), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=err, text=True)
+                    th = host.serve(proc)
+                    proc.wait(timeout=300)
+                    th.join(timeout=30)
+                stderr = (tmp / f"err{round_index}.txt").read_text(encoding="utf-8")
+                self.assertIsNone(host.failure, stderr[-3000:])
+                self.assertEqual(proc.returncode, 0, stderr[-3000:])
+                if round_index == 2:
+                    self.assertEqual(host.record["configuration"]["choice"], "same_period")
+                    self.assertEqual(host.record["selected_artifact_id"], "model-test-1")
+                    adopted_ckpt = tmp / "work" / "rsi-round-02" / "candidates" / "same_period" / "checkpoint.npz"
+                    self.assertTrue(adopted_ckpt.is_file())
+                    (tmp / "previous" / "checkpoint.npz").write_bytes(adopted_ckpt.read_bytes())
+                    sample_rows = [json.loads(l) for l in va_lines[:3]]
+                    payload = "".join(json.dumps({"task": "classification", "inputs": r["inputs"]}) + "\n" for r in sample_rows)
+                    pred_env = self.env(tmp / "pred")
+                    pred_env["CONTEST_ARTIFACT_PATH"] = str(adopted_ckpt)
+                    out = subprocess.run([sys.executable, str(APP / "harness.py"), "predict"], cwd=APP,
+                                         env=pred_env, input=payload, capture_output=True, text=True, timeout=60)
+                    self.assertEqual(out.returncode, 0, out.stderr[-2000:])
+                    self.assertEqual(len(out.stdout.strip().splitlines()), 3)
+                if round_index == 3:
+                    self.assertIn("continue", host.record["configuration"]["candidates"])
+                    self.assertIn("same_period", host.record["configuration"]["candidates"])
 
     def test_model_veto_keeps_parent(self):
         record, _ = self.run_round(TASKS[0], agree=False)
@@ -361,6 +500,50 @@ class HelperTest(unittest.TestCase):
                 self.assertFalse((tmp / "recent2.jsonl").exists())
             finally:
                 self.cs.MAX_TRAIN_BYTES = old
+
+    def test_same_period_calibration_actions_and_determinism(self):
+        import numpy as np
+        from baselines.model import Model
+        from harness.dataio import load_dataset
+
+        parent_ckpt = DATA / "A" / "checkpoint.npz"
+        parent = Model.load(str(parent_ckpt))
+        tr = load_dataset(str(DATA / "A" / "public" / "train.jsonl"),
+                          parent.meta["task"], parent.meta["classes"], parent.meta["paths"])
+        n = len(tr["y"])
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            # Case 1: <= 2 classes and <= 10% rows -> history_mix
+            cls0 = np.flatnonzero(tr["y"] == 0)[:5]
+            mask_mix = np.zeros(n, dtype=bool)
+            mask_mix[cls0] = True
+            ckpt1, info1 = self.cs.train_same_period_calibration(parent_ckpt, tr, mask_mix, 3, tmp / "mix1")
+            ckpt1b, _ = self.cs.train_same_period_calibration(parent_ckpt, tr, mask_mix, 3, tmp / "mix2")
+            self.assertEqual(info1["action"], "history_mix")
+            self.assertEqual(info1["released_classes"], 1)
+            self.assertEqual(info1["updates"], 20)
+            m1 = Model.load(str(ckpt1))
+            m1b = Model.load(str(ckpt1b))
+            self.assertEqual(m1.meta["steps"], parent.meta["steps"] + 20)
+            for name in ("w1", "b1", "w2", "b2"):
+                self.assertTrue(np.array_equal(m1.params[name], m1b.params[name]))
+
+            # Case 2: > 2 classes / > 10% rows -> recent_only
+            mask_recent = np.zeros(n, dtype=bool)
+            mask_recent[n // 2:] = True
+            ckpt2, info2 = self.cs.train_same_period_calibration(parent_ckpt, tr, mask_recent, 4, tmp / "recent")
+            self.assertEqual(info2["action"], "recent_only")
+            self.assertGreater(info2["released_classes"], 2)
+            m2 = Model.load(str(ckpt2))
+            self.assertEqual(m2.meta["steps"], parent.meta["steps"] + 20)
+            self.assertTrue(np.all(np.isfinite(m2.predict(tr["x"][:5]))))
+
+
+    def test_clip_utf8_respects_sdk_byte_limit(self):
+        heavy = "中文理由测试" * 400
+        clipped = self.cs.clip_utf8(heavy, 3900)
+        self.assertLessEqual(len(clipped.encode("utf-8")), 3900)
+        self.assertGreater(len(clipped.encode("utf-8")), 3890)
 
 
 if __name__ == "__main__":

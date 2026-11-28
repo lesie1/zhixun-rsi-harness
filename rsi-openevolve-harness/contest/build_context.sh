@@ -20,6 +20,8 @@ cp -r "$REPO/baselines" "$OUT/app/rsi/baselines"
 rm -rf "$OUT/app/rsi/baselines/tests"
 cp "$REPO/team_sim/__init__.py" "$REPO/team_sim/policy.py" "$OUT/app/rsi/team_sim/"
 cp "$HERE/policies/policy_pick.py" "$OUT/app/rsi/policies/"
+cp -r "$HERE/c_agent" "$OUT/app/c_agent"
+rm -rf "$OUT/app/c_agent/tests"
 cp "$HERE/Dockerfile" "$OUT/Dockerfile"
 find "$OUT" -name __pycache__ -prune -exec rm -rf {} +
 echo "build context: $OUT ($(du -sh "$OUT" | cut -f1))"
